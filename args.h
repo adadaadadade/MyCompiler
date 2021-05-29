@@ -1,10 +1,10 @@
 #include "common.h"
 
-class args
+class Args
 {
 private:
     /* data */
 public:
-    args(/* args */);
-    ~args();
+    Args(/* args */);
+    ~Args();
 };
