@@ -4,6 +4,7 @@
 #include "error.h"
 #include "scanner.h"
 #include "lexer.h"
+#include "parser.h"
 #include "keywords.h"
 #include "util.h"
 
@@ -19,9 +20,10 @@ int main(int argc, char *argv[])
 		}
         Scanner scanner(srcfiles[0]);
         Lexer lexer(scanner);
+        Parser parser(lexer);
         KeyWords();
         //outputScanner(scanner);
-        outputTokens(lexer);
+        //outputTokens(lexer);
     }
     else
     {

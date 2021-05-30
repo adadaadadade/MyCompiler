@@ -54,8 +54,8 @@ class Parser
     Exp* exp();
     void exp_base(Exp* exp);
     void call_ornot(Exp* exp);
-    void call_paralist(Exp* exp);
-    void call_para(Exp* exp);
+    Call_Paralist* call_paralist();
+    void call_para(Call_Paralist* call_paralist);
     void exp_tail(Exp* exp);
 
     Vid* vid();
@@ -68,6 +68,7 @@ class Parser
     Num* num();
     Str* str();
     Chr* chr();
+    Bool* boo();
 
 public:
 

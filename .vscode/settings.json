@@ -6,6 +6,7 @@
         "typeinfo": "cpp",
         "string": "cpp",
         "ostream": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "vector": "cpp"
     }
 }

@@ -207,6 +207,7 @@ public:
     TpType type;
 
     Tp *tp;
+    Tp *tp_tail;
     Sid *sid;
     Aid *aid;
 
@@ -233,7 +234,7 @@ public:
         UNOP,
         TRI,
         FUNC,
-        POTFID,
+        DOTFID,
         TOFID,
         ARRAY,
         POINTER,
@@ -246,10 +247,12 @@ public:
     Exp *exp1;
     Exp *exp2;
     Exp *exp3;
+    Exp *exp_tail;
     Num *numlit;
     Str *strlit;
     Chr *chrlit;
     Bool *boollit;
+    Call_Paralist* cpl;
 
     Vid *vid;
     vector<Vid *> vid_list;
@@ -307,6 +310,7 @@ public:
 
     Vid *vid;
     Lv *lv;
+    Lv *lv_tail;
     Fid *fid;
     Exp *exp;
 
@@ -373,14 +377,27 @@ public:
     virtual string get_nodetype();
 };
 
+
 class Paralist : public Node
 {
     const string nodetype = "Paralist";
-    public:
-        vector<Tp *> tp_list;
-        vector<Vid *> vid_list;
+public:
+    vector<Tp *> tp_list;
+    vector<Vid *> vid_list;
 
     Paralist();
+    virtual string toString();
+    virtual void print();
+    virtual string get_nodetype();
+};
+
+class Call_Paralist : public Node
+{
+    const string nodetype = "Call_Paralist";
+public:
+    vector<Exp *> exp_list;
+    
+    Call_Paralist();
     virtual string toString();
     virtual void print();
     virtual string get_nodetype();

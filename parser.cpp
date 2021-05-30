@@ -4,6 +4,7 @@
 #define F(C) look->tag==C
 
 #define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)
+#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD |LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(AND)_(XOR)_(OR )_(LAND)_(LOR)
 #define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)_(ID)
 #define FEXP (FUNOP)_(LPAREN)_(NUMLIT)_(STRLIT)_(KW_TRUE)_(KW_FALSE)_(KW_NULL)_(KW_ALLOC)_(KW_ALLOC_ARRAY)_(MUL)_(ID)
 #define FSIMPLE (FEXP)_(ID)_(MUL)
@@ -21,7 +22,8 @@ Parser::~Parser()
 void Parser::move()
 {
     look = lexer.nextToken();
-    //if(Args::showToken)printf("%s\n",look->toString().c_str());//输出词法记号——测试
+    //if(Args::showToken)
+    printf("%s\n",look->toString().c_str());//输出词法记号——测试
 }
 
 bool Parser::match(TokenType t)
@@ -444,7 +446,7 @@ void Parser::lv_tail(Lv* l)
     while(FLVTAIL)
     {
         Lv* temp = new Lv();
-        i->lv = temp;
+        i->lv_tail = temp;
         i = temp;
         if(match(DOT))
         {
@@ -513,7 +515,7 @@ void Parser::tp_tail(Tp* tp)
     while(F(MUL)_(LBRACK))
     {
         Tp* temp = new Tp();
-        i->tp = temp;
+        i->tp_tail = temp;
         i = temp;
 
         if(match(MUL))
@@ -563,7 +565,7 @@ Exp* Parser::exp()
 {
     Exp* e = new Exp();
 
-    if(FUNOP)
+/*     if(FUNOP)
     {
         e->type = e->UNOP;
 
@@ -571,10 +573,10 @@ Exp* Parser::exp()
         e->exp1 = exp(); e->exp1->set_parent(e);
     }
     else
-    {
-        exp_base(e);
-        exp_tail(e);
-    }
+    { */
+    exp_base(e);
+    exp_tail(e);
+    //}
     return(e);
 }
 
@@ -584,119 +586,369 @@ void Parser::exp_base(Exp* e)
     switch (look->tag)
     {
     case LPAREN:
-        match(CHRLIT);
-        break;
-    
-    case NUMLIT:
-        e->numlit = num(); e->numlit->set_parent(e);
+        match(LPAREN);
+        e->exp1 = exp();
+        match(RPAREN);
 
         break;
     
+    case NUMLIT:
+        e->type = e->NUMLIT;
+        e->numlit = num(); e->numlit->set_parent(e);
+        break;
+    
     case STRLIT:
+        e->type = e->STRLIT;
         e->strlit = str(); e->strlit->set_parent(e);
         break;
     
     case CHRLIT:
+        e->type = e->CHRLIT;
         e->chrlit = chr(); e->chrlit->set_parent(e);
         break;
     
     case KW_TRUE:
-        match(KW_TRUE);
+        e->type = e->BOOL;
+        e->boollit = boo(); e->boollit->set_parent(e);
         break;
     
     case KW_FALSE:
-        match(KW_FALSE);
+        e->type = e->BOOL;
+        e->boollit = boo(); e->boollit->set_parent(e);
         break;
     
     case KW_NULL:
+        e->type = e->NULLTYPE;
         match(KW_NULL);
         break;
     
     case KW_ALLOC:
+        e->type = e->ALLOC;
         match(KW_ALLOC);
+        match(LPAREN);
+        e->tp = tp(); e->tp->set_parent(e);
+        match(RPAREN);
         break;
     
     case KW_ALLOC_ARRAY:
+        e->type = e->ALLOCARRAY;
         match(KW_ALLOC_ARRAY);
+        match(LPAREN);
+        e->tp = tp(); e->tp->set_parent(e);
+        match(COMMA);
+        e->exp1 = exp();
+        match(RPAREN);
         break;
     
     case MUL:
+        e->type = e->POINTER;
         match(MUL);
+        e->exp1 = exp();
         break;
     
     case ID:
-        match(ID);
-        break;
-    //////
-    default:
+        e->type = e->VID;
+        e->vid = vid(); e->vid->set_parent(e);
+        match(LPAREN);
+        e->cpl = call_paralist(); e->cpl->set_parent(e);
+        match(RPAREN);
 
+        break;
+    default:
+        if(FUNOP)
+        {
+            e->type = e->UNOP;
+            e->unop = unop(); e->unop->set_parent(e);
+            e->exp1 = exp();
+        }
         break;
     }
 }
 
 
-void Parser::call_ornot(Exp* exp)
+void Parser::exp_tail(Exp* e)
 {
+    Exp* i;
+    i = e;
+    while((FBINOP)_(QUE)_(DOT)_(SUB)_(LBRACK))
+    {
+        Exp* temp = new Exp();
+        i->exp_tail = temp;
+        i = temp;
+        switch (look->tag)
+        {
+        case QUE:
+            i->type = i->TRI;
+            match(QUE);
+            i->exp1 = exp(); i->exp1->set_parent(i);
+            match(COLON);
+            i->exp2 = exp(); i->exp2->set_parent(i);
+            break;
 
+        case DOT:
+            i->type = i->DOTFID;
+            match(DOT);
+            i->fid = fid(); i->fid->set_parent(i);
+            break;
+
+        case SUB:
+            i->type = i->POINTER;
+            match(SUB);
+            match(GTH);
+            i->fid = fid(); i->fid->set_parent(i);
+        
+        case LBRACK:
+            i->type = i->ARRAY;
+            match(LBRACK);
+            i->exp1 = exp(); i->exp1->set_parent(i);
+            match(RBRACK);
+            break;
+        
+        default:
+            break;
+        }
+    }
 }
 
 
-void Parser::call_paralist(Exp* exp)
+Call_Paralist* Parser::call_paralist()
 {
-
+    Call_Paralist* cpl = new Call_Paralist();
+    if(FEXP)
+    {
+        cpl->exp_list.push_back(exp()); cpl->exp_list.back()->set_parent(cpl);
+        call_para(cpl);
+    }
+    return cpl;
 }
 
 
-void Parser::call_para(Exp* exp)
+void Parser::call_para(Call_Paralist* call_paralist)
 {
-
+    while(match(COMMA))
+    {
+        call_paralist->exp_list.push_back(exp()); call_paralist->exp_list.back()->set_parent(call_paralist);
+    }
 }
-
-
-void Parser::exp_tail(Exp* exp)
-{
-
-}
-
 
 
 Vid* Parser::vid()
 {
-
+    Vid* v = new Vid();
+    if(F(ID))
+    {
+        v->name = ((Id*)look)->name;
+        return v;
+    }
+    else
+    {
+        output_error();
+    }
 }
 
 
 Sid* Parser::sid()
 {
-
+    Sid* s = new Sid();
+    if(F(ID))
+    {
+        s->name = ((Id*)look)->name;
+        return s;
+    }
+    else
+    {
+        output_error();
+    }
 }
 
 
 Fid* Parser::fid()
 {
-
+    Fid* f = new Fid();
+    if(F(ID))
+    {
+        f->name = ((Id*)look)->name;
+        return f;
+    }
+    else
+    {
+        output_error();
+    }
 }
 
 
 Aid* Parser::aid()
 {
-
+    Aid* a = new Aid();
+    if(F(ID))
+    {
+        a->name = ((Id*)look)->name;
+    }
+    else
+    {
+        output_error();
+    }
+    return a;
 }
 
 
 Unop* Parser::unop()
 {
-
+    Unop* op = new Unop();
+    switch (look->tag)
+    {
+    case NOT:
+        op->type = op->NOT;
+        break;
+    
+    case BNEG:
+        op->type = op->BNEG;
+        break;
+    
+    case SUB:
+        op->type = op->SUB;
+        break;
+    
+    case MUL:
+        op->type = op->MUL;
+        break;
+    default:
+        output_error();
+        break;
+    }
+    return op;
 }
 
 
 Binop* Parser::binop()
 {
-
+    Binop* op = new Binop();
+    switch (look->tag)
+    {
+    case ADD:
+        op->type = op->ADD;
+        break;
+    
+    case SUB:
+        op->type = op->SUB;
+        break;
+    
+    case MUL:
+        op->type = op->MUL;
+        break;
+    
+    case DIV:
+        op->type = op->DIV;
+        break;
+    
+    case MOD:
+        op->type = op->MOD;
+        break;
+    
+    case LMO:
+        op->type = op->LMO;
+        break;
+    
+    case RMO:
+        op->type = op->RMO;
+        break;
+    
+    case LTH:
+        op->type = op->LTH;
+        break;
+    
+    case GTH:
+        op->type = op->GTH;
+        break;
+    
+    case EQU:
+        op->type = op->EQU;
+        break;
+    
+    case NEQ:
+        op->type = op->NEQ;
+        break;
+    
+    case AND:
+        op->type = op->AND;
+        break;
+    
+    case XOR:
+        op->type = op->XOR;
+        break;
+    
+    case OR:
+        op->type = op->OR;
+        break;
+    
+    case LAND:
+        op->type = op->LAND;
+        break;
+    
+    case LOR:
+        op->type = op->LOR;
+        break;
+    
+    default:
+        output_error();
+        break;
+    }
+    return op;
 }
 
 
 Asnop* Parser::asnop()
 {
-
+    Asnop* op = new Asnop();
+    switch (look->tag)
+    {
+    case ASN:
+        op->type = op->ASN;
+        break;
+    
+    case ASNADD:
+        op->type = op->ASNADD;
+        break;
+    
+    case ASNSUB:
+        op->type = op->ASNSUB;
+        break;
+    
+    case ASNMUL:
+        op->type = op->ASNMUL;
+        break;
+    
+    case ASNDIV:
+        op->type = op->ASNDIV;
+        break;
+    
+    case ASNMOD:
+        op->type = op->ASNMOD;
+        break;
+    
+    case ASNLMO:
+        op->type = op->ASNLMO;
+        break;
+    
+    case ASNRMO:
+        op->type = op->ASNRMO;
+        break;
+    
+    case ASNAND:
+        op->type = op->ASNAND;
+        break;
+    
+    case ASNXOR:
+        op->type = op->ASNXOR;
+        break;
+    
+    case ASNOR:
+        op->type = op->ASNOR;
+        break;
+    
+    default:
+        output_error();
+        break;
+    }
+    return op;
 }
