@@ -217,6 +217,33 @@ public:
     virtual string get_nodetype();
 };
 
+
+class Paralist : public Node
+{
+    const string nodetype = "Paralist";
+public:
+    vector<Tp *> tp_list;
+    vector<Vid *> vid_list;
+
+    Paralist();
+    virtual string toString();
+    virtual void print();
+    virtual string get_nodetype();
+};
+
+class Call_Paralist : public Node
+{
+    const string nodetype = "Call_Paralist";
+public:
+    vector<Node *> exp_list;
+    
+    Call_Paralist();
+    virtual string toString();
+    virtual void print();
+    virtual string get_nodetype();
+};
+
+
 class Exp : public Node
 {
     const string nodetype = "Exp";
@@ -253,6 +280,7 @@ public:
     Chr *chrlit;
     Bool *boollit;
     Call_Paralist* cpl;
+    Binop* binop;
 
     Vid *vid;
     vector<Vid *> vid_list;
@@ -378,36 +406,11 @@ public:
 };
 
 
-class Paralist : public Node
-{
-    const string nodetype = "Paralist";
-public:
-    vector<Tp *> tp_list;
-    vector<Vid *> vid_list;
-
-    Paralist();
-    virtual string toString();
-    virtual void print();
-    virtual string get_nodetype();
-};
-
-class Call_Paralist : public Node
-{
-    const string nodetype = "Call_Paralist";
-public:
-    vector<Exp *> exp_list;
-    
-    Call_Paralist();
-    virtual string toString();
-    virtual void print();
-    virtual string get_nodetype();
-};
-
 class Gdecl : public Node
 {
     const string nodetype = "Gdecl";
 public:
-    const enum GdeclType
+    enum GdeclType
     {
         STRUCTDECL,
         FUNCDECL

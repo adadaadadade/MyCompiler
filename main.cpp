@@ -19,9 +19,11 @@ int main(int argc, char *argv[])
 			srcfiles.push_back(argv[i]);
 		}
         Scanner scanner(srcfiles[0]);
+        KeyWords();
         Lexer lexer(scanner);
         Parser parser(lexer);
-        KeyWords();
+        Prog* ast = parser.makeAST();
+        ast->print();
         //outputScanner(scanner);
         //outputTokens(lexer);
     }

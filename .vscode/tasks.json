@@ -18,7 +18,25 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": false
+                "isDefault": true
+            },
+            "detail": "调试器生成的任务。"
+        },
+        {
+            "type": "cppbuild",
+            "label": "make",
+            "command": "make",
+            "args": [
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
             },
             "detail": "调试器生成的任务。"
         },

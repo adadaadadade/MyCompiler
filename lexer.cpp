@@ -303,11 +303,11 @@ Token* Lexer::nextToken()
             }
         }
         if(token)
-            //delete token;
+            delete token;
         token = t;
         return t;
     }
     if(token) 
-        //delete token;
+        delete token;
     return token = new Token(END);
 }

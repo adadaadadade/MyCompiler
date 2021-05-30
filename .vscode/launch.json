@@ -8,12 +8,14 @@
             "name": "(gdb) 启动",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/mycompiler",
-            "args": ["./sample/test.c"],
+            "program": "/home/weijj/projects/MyCompiler/mycompiler",
+            "args": [
+                "/home/weijj//projects/MyCompiler/sample/test.c"
+            ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "/home/weijj/projects/MyCompiler",
             "environment": [],
-            "externalConsole": false,
+            "externalConsole": true,
             "MIMode": "gdb",
             "setupCommands": [
                 {
@@ -24,6 +26,39 @@
             ],
             "preLaunchTask": "",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "gdb Remote Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "./mycompiler",
+            "args": [
+                "./sample/test.c"
+            ],
+            "stopAtEntry": true,
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "miDebuggerArgs": "gdb",
+            "linux": {
+                "MIMode": "gdb",
+                "miDebuggerPath": "/usr/bin/gdb",
+                "miDebuggerServerAddress": "8.140.189.1:10233",
+            },
+            "logging": {
+                "moduleLoad": false,
+                "engineLogging": false,
+                "trace": false
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "cwd": "${workspaceFolder}",
         },
         {
             "name": "g++ - 生成和调试活动文件",

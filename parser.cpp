@@ -4,7 +4,7 @@
 #define F(C) look->tag==C
 
 #define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)
-#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD |LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(AND)_(XOR)_(OR )_(LAND)_(LOR)
+#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(AND)_(XOR)_(OR )_(LAND)_(LOR)
 #define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)_(ID)
 #define FEXP (FUNOP)_(LPAREN)_(NUMLIT)_(STRLIT)_(KW_TRUE)_(KW_FALSE)_(KW_NULL)_(KW_ALLOC)_(KW_ALLOC_ARRAY)_(MUL)_(ID)
 #define FSIMPLE (FEXP)_(ID)_(MUL)
@@ -19,11 +19,19 @@ Parser::~Parser()
 {
 }
 
+void Parser::output_error()
+{
+
+}
+
 void Parser::move()
 {
     look = lexer.nextToken();
+    if(look->tag == ERR || look->tag == COMMIT || look->tag == DEF)
+        move();
+    else
     //if(Args::showToken)
-    printf("%s\n",look->toString().c_str());//输出词法记号——测试
+        printf("%s\n",look->toString().c_str());//输出词法记号——测试
 }
 
 bool Parser::match(TokenType t)
@@ -41,9 +49,8 @@ Prog* Parser::makeAST()
 {
     Prog* ast;
     move();
-
     ast = prog();
-
+    //printf("prog\n");
     return ast;
 }
 
@@ -52,7 +59,8 @@ Prog* Parser::prog()
     Prog* prog = new Prog();
     prog->deep = 0;
     prog->parent = NULL;
-    while(!F(END))
+    //printf("look.tag = %d\n", look->tag);
+    while(!(F(END)))
     {
         if(F(KW_TYPEDEF))
             typedef_def(prog);
@@ -84,6 +92,7 @@ void Parser::struct_base(Prog* p)
 
     match(KW_STRUCT);
     s = sid();
+
     struct_decl_ordefn_orfn(p, s);
 }
 
@@ -147,10 +156,10 @@ void Parser::struct_datalist(Gdefn* gdefn)
 
 void Parser::gfn(Prog* p)
 {
-    Tp* t = new Tp();
-    Vid* v = new Vid();
-    Paralist* pl = new Paralist();
-
+    Tp* t;
+    Vid* v;
+    Paralist* pl;
+    
     t = tp_without_struct();
     v = vid();
     match(LPAREN);
@@ -165,27 +174,29 @@ void Parser::fn_decl_ordefn(Prog* p, Tp* tp, Vid* vid, Paralist* pl)
     if(match(SEMICON))
     {
         Gdecl* gdecl = new Gdecl();
+        gdecl->set_parent(p);
+
         gdecl->type = gdecl->FUNCDECL;
         gdecl->tp = tp; tp->set_parent(gdecl);
         gdecl->vid = vid; vid->set_parent(gdecl);
         gdecl->pl = pl; pl->set_parent(gdecl);
 
-        p->gdecl_list.push_back(gdecl); gdecl->set_parent(p);
+        p->gdecl_list.push_back(gdecl);
     }
     else if (match(LBRACE))
     {
         Gdefn* gdefn = new Gdefn();
+        gdefn->set_parent(p);
         
         gdefn->type = gdefn->FUNCDEFN;
         gdefn->tp = tp; tp->set_parent(gdefn);
         gdefn->vid = vid; vid->set_parent(gdefn);
         gdefn->pl = pl; pl->set_parent(gdefn);
-
-        match(LBRACE);
         gdefn->body = body(); gdefn->body->set_parent(gdefn);
+        
         match(RBRACE);
 
-        p->gdefn_list.push_back(gdefn); gdefn->set_parent(p);
+        p->gdefn_list.push_back(gdefn); 
     }
 }
 
@@ -219,6 +230,7 @@ Body* Parser::body()
     Body* b = new Body();
     decllist(b);
     stmtlist(b);
+    return b;
 }
 
 
@@ -244,12 +256,12 @@ Decl* Parser::decl()
     }
     else
         d->exp = NULL;
-    
+    match(SEMICON);
     return d;
 }
 
 
-Node* Parser::stmtlist(Body* body)
+void Parser::stmtlist(Body* body)
 {
     while (FSTMT)
     {
@@ -659,7 +671,7 @@ void Parser::exp_base(Exp* e)
         {
             e->type = e->UNOP;
             e->unop = unop(); e->unop->set_parent(e);
-            e->exp1 = exp();
+            e->exp1 = exp(); e->exp1->set_parent(e);
         }
         break;
     }
@@ -705,6 +717,8 @@ void Parser::exp_tail(Exp* e)
             break;
         
         default:
+            i->binop = binop(); i->binop->set_parent(i);
+            i->exp1 = exp(); i->exp1->set_parent(i);
             break;
         }
     }
@@ -716,7 +730,7 @@ Call_Paralist* Parser::call_paralist()
     Call_Paralist* cpl = new Call_Paralist();
     if(FEXP)
     {
-        cpl->exp_list.push_back(exp()); cpl->exp_list.back()->set_parent(cpl);
+        cpl->exp_list.push_back((Node*)exp()); cpl->exp_list.back()->set_parent(cpl);
         call_para(cpl);
     }
     return cpl;
@@ -727,7 +741,7 @@ void Parser::call_para(Call_Paralist* call_paralist)
 {
     while(match(COMMA))
     {
-        call_paralist->exp_list.push_back(exp()); call_paralist->exp_list.back()->set_parent(call_paralist);
+        call_paralist->exp_list.push_back((Node*)exp()); call_paralist->exp_list.back()->set_parent(call_paralist);
     }
 }
 
@@ -738,12 +752,13 @@ Vid* Parser::vid()
     if(F(ID))
     {
         v->name = ((Id*)look)->name;
-        return v;
+        match(ID);
     }
     else
     {
         output_error();
     }
+    return v;
 }
 
 
@@ -753,12 +768,13 @@ Sid* Parser::sid()
     if(F(ID))
     {
         s->name = ((Id*)look)->name;
-        return s;
+        match(ID);
     }
     else
     {
         output_error();
     }
+    return s;
 }
 
 
@@ -768,12 +784,13 @@ Fid* Parser::fid()
     if(F(ID))
     {
         f->name = ((Id*)look)->name;
-        return f;
+        match(ID);
     }
     else
     {
         output_error();
     }
+    return f;
 }
 
 
@@ -783,12 +800,71 @@ Aid* Parser::aid()
     if(F(ID))
     {
         a->name = ((Id*)look)->name;
+        match(ID);
     }
     else
     {
         output_error();
     }
     return a;
+}
+
+
+Num* Parser::num()
+{
+    Num* n = new Num();
+    if(look->tag == NUMLIT)
+    {
+        n->value = ((Numlit*)look)->val;
+        match(NUMLIT);
+    }
+    else
+        output_error();
+    return n;
+}
+Str* Parser::str()
+{
+    Str* s = new Str();
+    if(look->tag = STRLIT)
+    {
+        s->str = ((Strlit*)look)->str;
+        match(STRLIT);
+    }
+    else
+        output_error();
+    return s;
+}
+
+Chr* Parser::chr()
+{
+    Chr* ch = new Chr();
+    if(look->tag == CHRLIT)
+    {
+        ch->ch = ((Chrlit*)look)->ch;
+        match(CHRLIT);
+    }
+    else
+        output_error();
+    return ch;
+}
+
+Bool* Parser::boo()
+{
+    Bool* b = new Bool();
+    if(look->tag == KW_TRUE)
+    {
+        b->boollit = true;
+        match(KW_TRUE);
+    }
+        
+    else if(look->tag == KW_FALSE)
+    {
+        b->boollit = false;
+        match(KW_FALSE);
+    }
+    else
+        output_error();
+    return b;
 }
 
 
@@ -799,18 +875,22 @@ Unop* Parser::unop()
     {
     case NOT:
         op->type = op->NOT;
+        match(NOT);
         break;
     
     case BNEG:
         op->type = op->BNEG;
+        match(BNEG);
         break;
     
     case SUB:
         op->type = op->SUB;
+        match(SUB);
         break;
     
     case MUL:
         op->type = op->MUL;
+        match(MUL);
         break;
     default:
         output_error();
@@ -827,66 +907,82 @@ Binop* Parser::binop()
     {
     case ADD:
         op->type = op->ADD;
+        match(ADD);
         break;
     
     case SUB:
         op->type = op->SUB;
+        match(SUB);
         break;
     
     case MUL:
         op->type = op->MUL;
+        match(MUL);
         break;
     
     case DIV:
         op->type = op->DIV;
+        match(DIV);
         break;
     
     case MOD:
         op->type = op->MOD;
+        match(MOD);
         break;
     
     case LMO:
         op->type = op->LMO;
+        match(LMO);
         break;
     
     case RMO:
         op->type = op->RMO;
+        match(RMO);
         break;
     
     case LTH:
         op->type = op->LTH;
+        match(LTH);
         break;
     
     case GTH:
         op->type = op->GTH;
+        match(GTH);
         break;
     
     case EQU:
         op->type = op->EQU;
+        match(EQU);
         break;
     
     case NEQ:
         op->type = op->NEQ;
+        match(NEQ);
         break;
     
     case AND:
         op->type = op->AND;
+        match(AND);
         break;
     
     case XOR:
         op->type = op->XOR;
+        match(XOR);
         break;
     
     case OR:
         op->type = op->OR;
+        match(OR);
         break;
     
     case LAND:
         op->type = op->LAND;
+        match(LAND);
         break;
     
     case LOR:
         op->type = op->LOR;
+        match(LOR);
         break;
     
     default:
@@ -904,46 +1000,57 @@ Asnop* Parser::asnop()
     {
     case ASN:
         op->type = op->ASN;
+        match(ASN);
         break;
     
     case ASNADD:
         op->type = op->ASNADD;
+        match(ASNADD);
         break;
     
     case ASNSUB:
         op->type = op->ASNSUB;
+        match(ASNSUB);
         break;
     
     case ASNMUL:
         op->type = op->ASNMUL;
+        match(ASNMUL);
         break;
     
     case ASNDIV:
         op->type = op->ASNDIV;
+        match(ASNDIV);
         break;
     
     case ASNMOD:
         op->type = op->ASNMOD;
+        match(ASNMOD);
         break;
     
     case ASNLMO:
         op->type = op->ASNLMO;
+        match(ASNLMO);
         break;
     
     case ASNRMO:
         op->type = op->ASNRMO;
+        match(ASNRMO);
         break;
     
     case ASNAND:
         op->type = op->ASNAND;
+        match(ASNAND);
         break;
     
     case ASNXOR:
         op->type = op->ASNXOR;
+        match(ASNXOR);
         break;
     
     case ASNOR:
         op->type = op->ASNOR;
+        match(ASNOR);
         break;
     
     default:

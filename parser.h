@@ -34,7 +34,7 @@ class Parser
     Decl* decl();
     void init();
 
-    Node* stmtlist(Body* body);
+    void stmtlist(Body* body);
     Stmt* stmt();
     void else_tail(Stmt* stmt);
     void exp_ornot(Stmt* stmt);

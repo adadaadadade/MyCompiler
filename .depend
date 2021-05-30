@@ -1,12 +1,12 @@
 args.o: args.cpp args.h common.h
 ast.o: ast.cpp ast.h common.h
 scanner.o: scanner.cpp scanner.h common.h error.h
+error.o: error.cpp error.h
 lexer.o: lexer.cpp lexer.h common.h scanner.h keywords.h token.h util.h
 parser.o: parser.cpp parser.h common.h lexer.h scanner.h keywords.h \
  token.h ast.h
-error.o: error.cpp error.h
 token.o: token.cpp token.h common.h keywords.h
 keywords.o: keywords.cpp keywords.h common.h token.h
 main.o: main.cpp compiler.h error.h scanner.h common.h lexer.h keywords.h \
- token.h util.h
+ token.h parser.h ast.h util.h
 util.o: util.cpp util.h common.h scanner.h lexer.h keywords.h token.h

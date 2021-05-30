@@ -98,6 +98,7 @@
     | MUL <exp>
     | <unop> <exp>
     | <vid> LPAREN <call_ornot> RPAREN
+    | <vid> LBRACK <exp> RBRACK
 
 <call_ornot> ::=  <call_paralist>  
     | $

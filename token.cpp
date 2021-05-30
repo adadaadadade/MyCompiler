@@ -16,7 +16,6 @@ const string tokenName[] =
 		"[", "]",	   //[]
 		"{", "}",	   //{}
 		",", ":", ";", //逗号,冒号,分号
-		"KW",
 		"int", "bool", "string", "char", "struct",
 		"typedef",
 		"if","else", "while", "for", "continue", "break", "return",
