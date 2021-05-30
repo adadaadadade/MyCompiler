@@ -1,8 +1,0 @@
-scanner.o: scanner.cpp scanner.h common.h error.h
-error.o: error.cpp error.h
-lexer.o: lexer.cpp lexer.h common.h scanner.h keywords.h token.h util.h
-token.o: token.cpp token.h common.h keywords.h
-keywords.o: keywords.cpp keywords.h common.h
-main.o: main.cpp compiler.h error.h scanner.h common.h lexer.h keywords.h \
- token.h util.h
-util.o: util.cpp util.h common.h scanner.h lexer.h keywords.h token.h
