@@ -1,7 +1,11 @@
 #include "parser.h"
+#include "error.h"
+#include "symtab.h"
 
 #define _(T) ||look->tag==T
 #define F(C) look->tag==C
+
+#define ISAID(id) F(ID)&&Symtab::get_typedef(id)!=NULL
 
 #define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)
 #define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(AND)_(XOR)_(OR )_(LAND)_(LOR)
@@ -29,9 +33,9 @@ void Parser::move()
     look = lexer.nextToken();
     if(look->tag == ERR || look->tag == COMMIT || look->tag == DEF)
         move();
-    else
+    //else
     //if(Args::showToken)
-        printf("%s\n",look->toString().c_str());//输出词法记号——测试
+        //printf("%s\n",look->toString().c_str());//输出词法记号——测试
 }
 
 bool Parser::match(TokenType t)
@@ -44,6 +48,8 @@ bool Parser::match(TokenType t)
     else
         return false;
 }
+
+
 
 Prog* Parser::makeAST()
 {
@@ -277,15 +283,16 @@ Stmt* Parser::stmt()
     {
     case KW_IF:
         s->type = s->IF;
-
+        printf("here");
         match(KW_IF);
         match(LPAREN);
         s->exp1 = exp(); s->exp1->set_parent(s);
         match(RPAREN); 
         s->stmt1 = stmt(); s->stmt1->set_parent(s);
+        printf("here");
         if(match(KW_ELSE))
         {
-            s->stmt2 = stmt(); s->exp2->set_parent(s);
+            s->stmt2 = stmt(); s->stmt2->set_parent(s);
         }
         else
             s->stmt2 = NULL;
@@ -313,7 +320,7 @@ Stmt* Parser::stmt()
         match(SEMICON);
         if(FSIMPLE)
         {
-            s->simple2 = simple(); s->simple1->set_parent(s);
+            s->simple2 = simple(); s->simple2->set_parent(s);
         }
         match(RPAREN);
         s->stmt1 = stmt(); s->stmt1->set_parent(s);
@@ -567,7 +574,7 @@ void Parser::tp_without_struct_base(Tp* tp)
     else
     {
         tp->type = tp->AID;
-        tp->aid = aid();
+        tp->aid = aid(); tp->aid->set_parent(tp);
     }
 }
 
@@ -599,7 +606,7 @@ void Parser::exp_base(Exp* e)
     {
     case LPAREN:
         match(LPAREN);
-        e->exp1 = exp();
+        e->exp1 = exp(); e->exp1->set_parent(e);
         match(RPAREN);
 
         break;
@@ -648,14 +655,14 @@ void Parser::exp_base(Exp* e)
         match(LPAREN);
         e->tp = tp(); e->tp->set_parent(e);
         match(COMMA);
-        e->exp1 = exp();
+        e->exp1 = exp(); e->exp1->set_parent(e);
         match(RPAREN);
         break;
     
     case MUL:
         e->type = e->POINTER;
         match(MUL);
-        e->exp1 = exp();
+        e->exp1 = exp();  e->exp1->set_parent(e);
         break;
     
     case ID:
@@ -801,6 +808,8 @@ Aid* Parser::aid()
     {
         a->name = ((Id*)look)->name;
         match(ID);
+        Var* v = new Var(Tp());
+        symtab::add_typedef(v);
     }
     else
     {

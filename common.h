@@ -7,3 +7,13 @@
 #include <ctype.h>
 #include <iostream>
 using namespace std;
+
+
+class Token;
+class Scanner;
+class Error;
+class Lexer;
+class Parser;
+class Var;
+class Func;
+class Args;

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "common.h"
 
 class Node
@@ -211,7 +213,9 @@ public:
     Sid *sid;
     Aid *aid;
 
+    Tp(TpType type);
     Tp();
+    
     virtual string toString();
     virtual void print();
     virtual string get_nodetype();

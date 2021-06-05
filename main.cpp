@@ -1,10 +1,9 @@
-#include <iostream>
-#include <cstring>
 #include "compiler.h"
 #include "error.h"
 #include "scanner.h"
 #include "lexer.h"
 #include "parser.h"
+#include "symtab.h"
 #include "keywords.h"
 #include "util.h"
 
@@ -21,6 +20,7 @@ int main(int argc, char *argv[])
         Scanner scanner(srcfiles[0]);
         KeyWords();
         Lexer lexer(scanner);
+        Symtab symtab;
         Parser parser(lexer);
         Prog* ast = parser.makeAST();
         ast->print();

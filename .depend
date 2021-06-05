@@ -1,8 +1,10 @@
-args.o: args.cpp args.h common.h
+symtab.o: symtab.cpp symtab.h common.h
 ast.o: ast.cpp ast.h common.h
+symbol.o: symbol.cpp symbol.h common.h ast.h
 scanner.o: scanner.cpp scanner.h common.h error.h
 error.o: error.cpp error.h
 lexer.o: lexer.cpp lexer.h common.h scanner.h keywords.h token.h util.h
+args.o: args.cpp args.h common.h
 parser.o: parser.cpp parser.h common.h lexer.h scanner.h keywords.h \
  token.h ast.h
 token.o: token.cpp token.h common.h keywords.h

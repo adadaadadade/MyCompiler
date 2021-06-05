@@ -1,6 +1,14 @@
 struct test;
+typedef int type;
 
-int main(bool a[1], int b)
+int main(char a, int b)
 {
     int b = 0x0F;
+    return ;
+    if(a)
+    {
+
+    }
+    break ;
+    continue ;
 }

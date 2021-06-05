@@ -300,6 +300,10 @@ Tp::Tp()
 {
 }
 
+Tp::Tp(TpType type):type(type)
+{
+}
+
 string Tp::toString()
 {
     return "Tp: " + to_string(type);
