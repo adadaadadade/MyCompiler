@@ -9,7 +9,7 @@ class Lexer
 {
 	static KeyWords keywords;//关键字列表
 	Scanner &scanner;//扫描器
-	char ch;//读入的字符
+	signed char ch;//读入的字符
 
 	Token *token;//记录扫描的词法记号
 	

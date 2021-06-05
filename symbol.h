@@ -19,11 +19,10 @@ private:
     union
     {
         int int_var;
-        char str_var;
+        char chr_var;
         bool bool_var;
         string str_var;
     };
-
     string ptrVal; //初始化字符指针常量字符串的名称
 
     Var *ptr;

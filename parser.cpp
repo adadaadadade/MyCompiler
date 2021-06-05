@@ -35,7 +35,7 @@ void Parser::move()
         move();
     //else
     //if(Args::showToken)
-        //printf("%s\n",look->toString().c_str());//输出词法记号——测试
+        printf("%s\n",look->toString().c_str());//输出词法记号——测试
 }
 
 bool Parser::match(TokenType t)
@@ -808,8 +808,8 @@ Aid* Parser::aid()
     {
         a->name = ((Id*)look)->name;
         match(ID);
-        Var* v = new Var(Tp());
-        symtab::add_typedef(v);
+        //Var* v = new Var(Tp());
+        //symtab::add_typedef(v);
     }
     else
     {
