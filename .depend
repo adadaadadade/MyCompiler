@@ -1,14 +1,14 @@
-symtab.o: symtab.cpp symtab.h common.h symbol.h ast.h
-ast.o: ast.cpp ast.h common.h
-symbol.o: symbol.cpp symbol.h common.h ast.h
-scanner.o: scanner.cpp scanner.h common.h error.h
+symtab.o: symtab.cpp symtab.h common.h symbol.h ast.h token.h keywords.h
+ast.o: ast.cpp ast.h common.h token.h keywords.h
+symbol.o: symbol.cpp symbol.h common.h ast.h token.h keywords.h
+scanner.o: scanner.cpp scanner.h common.h error.h args.h
 error.o: error.cpp error.h
 lexer.o: lexer.cpp lexer.h common.h scanner.h keywords.h token.h util.h
 args.o: args.cpp args.h common.h
 parser.o: parser.cpp parser.h common.h lexer.h scanner.h keywords.h \
- token.h ast.h error.h symtab.h
+ token.h ast.h error.h symbol.h symtab.h args.h
 token.o: token.cpp token.h common.h keywords.h
 keywords.o: keywords.cpp keywords.h common.h token.h
 main.o: main.cpp compiler.h error.h scanner.h common.h lexer.h keywords.h \
- token.h parser.h ast.h symtab.h util.h
+ token.h parser.h ast.h symtab.h util.h args.h
 util.o: util.cpp util.h common.h scanner.h lexer.h keywords.h token.h

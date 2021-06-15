@@ -62,8 +62,8 @@
     | $
 
 <simple> ::= <lv> <asnop> <exp>
-    | <lv> ADD ADD
-    | <lv> SUB SUB
+    | <lv> INC
+    | <lv> DEC
     | <exp>
 
 
@@ -71,7 +71,7 @@
 
 <lv_base> ::= <vid> | MUL <lv>
 
-<lv_tail> ::= DOT <fid> <lv_tail> | SUB GTH <fid> <lv_tail>
+<lv_tail> ::= DOT <fid> <lv_tail> | ARROW <fid> <lv_tail>
     | LBRACK <exp> RBRACK <lv_tail> 
     | $
 
@@ -89,7 +89,7 @@
 <tp_tail> ::= MUL <tp_tail> | LBRACK RBRACK <tp_tail>
     | $
 
-
+~~~
 <exp> ::= <exp_base> <exp_tail>
 
 <exp_base> ::= LPAREN <exp> RPAREN
@@ -114,6 +114,99 @@
     | DOT <fid> | <exp> SUB GTH <fid> <exp_tail>
     | LBRACK <exp> RBRACK <exp_tail>
     | $
+~~~
+<expr> ::= <triexpr>
+
+<triexpr> ::= <lorexpr> <tritail> 
+
+<tritail> ::= QUE <lorexpr> <tritail> COLON <lorexpr> <tritail>
+    | $
+
+<lorexpr> ::= <landexpr> <lortail>
+
+<lortail> ::= LOR <landexpr> <lortail>
+    |$
+
+<landexpr> ::= <borexpr> <landtail>
+
+<landtail> ::= LAND <borexpr> <landtail>
+    |$
+
+<borexpr> ::= <bxorexpr> <bortail>
+
+<bortail> ::= BOR <bxorexpr> <bortail>
+    |$
+
+<bxorexpr> ::= <bandexpr> <bxortail>
+
+<bxortail> ::= BXOR <bandexpr> <bxortail>
+
+<bandexpr> ::= <cmpexpr> <bandtail>
+
+<bandtail> ::= BAND <equexpr> <bandtail>
+    |$
+
+<equexpr> ::= <cmpexpr> <equtail>
+
+<equtail> ::= <equ_binop> <cmpexpr> <equtail>
+    |$
+
+<equ_binop> ::= EUQ | NEQ
+
+<cmpexpr> ::= <shiftexpr> <cmptail>
+
+<cmptail> ::= <cmp_binop> <shiftexpr> <cmptail>
+    |$
+
+<cmp_binop> ::= LTH | GTH | LET | GET
+
+<shiftexpr> ::= <aloexpr> <shifttail>
+
+<shifttail> ::= <shift_binop> <aloexpr> <shifttail>
+    |$
+
+<shift_binop> ::= LMO | RMO
+
+<aloexpr> ::= <mlusexpr> <alotail>
+
+<alotail> ::= <alo_binop> <mlusexpr> <alotail>
+    |$
+
+<alo_binop> ::= ADD | SUB
+
+<mlusexpr> ::= <unopexpr> <mulstail>
+
+<mulstail> ::= <muls_binop> <unopexpr> <mulstail>
+    |$
+
+<muls_binop> ::= MUL | DIV | MOD
+
+<unopexpr> ::= <unop> <unopexpr>
+    | <elem>
+
+<unop> ::= NOT | BNEG | SUB | MUL | INC | DEC
+
+<elem> ::= LPAREN <expr> RPAREN
+    | ID <idexpr>
+    | <allocs>
+    | <literal>
+
+<alocs> ::= KW_ALLOC LPAREN <tp> RPAREN
+    | KW_ALLOC_ARRAY LPAREN <tp> COMMA <expr> RPAREN
+
+<idexpr> ::= LBRACK <expr> RBRACK
+    | LPAREN <realarg> RPAREN
+    |$
+
+<realarg> ::= <arg> <arglist>
+    |$
+
+<arg> ::= <expr>
+
+<arglist> ::= COMMA <arg> <arglist>
+    |$
+
+<literal> ::= NUMLIT | CHRLIT | STRLIT
 
 <vid> ::= ID
 

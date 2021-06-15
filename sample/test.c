@@ -1,5 +1,9 @@
-int main(char a, int b)
+
+typedef int mytype;
+
+int test(char a, int b)
 {
-    int b = 0x0F;
-    return ;
+    mytype[][] c;
+    c.c->a = 1;
+    c[100][100] = 1;
 }

@@ -58,16 +58,18 @@ Token* Lexer::nextToken()
             scan();
             if(str[0] == '0' && isXx(ch))   //是0x 0X
             {
+                scan();
+                str.clear();
                 do
                 {
                     str.push_back(ch);
                     scan();
                 } while (ishexnum(ch));
-                t = new Numlit(stoi(str.substr(2), nullptr, 16),HEXNUM);
+                t = new Numlit(stoi(str, nullptr, 16), HEXNUM);
             }
             else    //是十进制
             {
-                if(!str[0] == '0' || isdigitN0(ch)) //判断非0
+                if(str[0] != '0' && isdigit(ch)) //判断非0
                 {
                     do
                     {
@@ -75,7 +77,7 @@ Token* Lexer::nextToken()
                         scan();
                     } while (isdigit(ch));
                 }
-                t = new Numlit(stoi(str),HEXNUM);
+                t = new Numlit(stoi(str, nullptr, 10), DECNUM);
             }
         }
         else if(ch == '"') //字符串/////////////////////////????
@@ -148,11 +150,40 @@ Token* Lexer::nextToken()
             case '~':   // ~
                 t = new Token(BNEG);
                 break;
-            case '+':   // + +=
-                t = new Token(scan('=') ? ASNADD : ADD);
+            case '+':   // + += ++
+                scan();
+                if (ch == '=')
+                {
+                    scan();
+                    t = new Token(ASNADD);
+                }
+                else if (ch == '+')
+                {
+                    scan();
+                    t = new Token(INC);
+                }
+                else
+                    t = new Token(ADD);
                 break;
-            case '-':   // - -=
-                t = new Token(scan('=') ? ASNSUB : SUB);
+            case '-':   // - -= -- ->
+                scan();
+                if (ch == '=')
+                {
+                    scan();
+                    t = new Token(ASNSUB);
+                }
+                else if (ch == '-')
+                {
+                    scan();
+                    t = new Token(DEC);
+                }
+                else if (ch == '>')
+                {
+                    scan();
+                    t = new Token(ARROW);
+                }
+                else
+                    t = new Token(SUB);
                 break;
             case '*':   // * *=
                 t = new Token(scan('=') ? ASNMUL : MUL);
@@ -191,31 +222,37 @@ Token* Lexer::nextToken()
             case '%':   // % %=
                 t = new Token(scan('=') ? ASNMOD : MOD);
                 break;
-            case '<':   // < << <<=
-                if(scan('<'))
+            case '<':   // < << <= <<=
+                scan();
+                if(ch == '<')
                 {
-                    if(ch == '=')
-                    {
+                    if(scan('='))
                         t = new Token(ASNLMO);
-                        scan();
-                    }
                     else
                         t = new Token(LMO);
+                }
+                else if(ch == '=')
+                {
+                    scan();
+                    t = new Token(LET);
                 }
                 else
                     t = new Token(LTH);
                 break;
 
             case '>':   // > >> >>=
-                if(scan('>'))
+                scan();
+                if(ch == '>')
                 {
-                    if(ch == '=')
-                    {
+                    if(scan('='))
                         t = new Token(ASNRMO);
-                        scan();
-                    }
                     else
                         t = new Token(RMO);
+                }
+                else if(ch == '=')
+                {
+                    scan();
+                    t = new Token(GET);
                 }
                 else
                     t = new Token(GTH);
@@ -237,11 +274,11 @@ Token* Lexer::nextToken()
                     scan();
                 }
                 else
-                    t = new Token(AND);
+                    t = new Token(BAND);
                 break;
 
             case '^':   // ^ ^=
-                t = new Token(scan('=') ? ASNXOR : XOR);
+                t = new Token(scan('=') ? ASNXOR : BXOR);
                 break;
             case '|':   // | || |=
                 scan();
@@ -256,7 +293,7 @@ Token* Lexer::nextToken()
                     scan();
                 }
                 else
-                    t = new Token(OR);
+                    t = new Token(BOR);
                 break;
 
             case '(':

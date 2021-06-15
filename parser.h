@@ -1,3 +1,5 @@
+#pragma once
+
 #include "common.h"
 #include "lexer.h"
 #include "ast.h"
@@ -7,6 +9,8 @@ class Parser
 {
 
     Lexer &lexer;
+    Symtab &symtab;
+
     Prog* AST;
     Token* look;
     vector <Token*> token_buf;
@@ -51,29 +55,61 @@ class Parser
     Tp* tp_without_struct();
     void tp_without_struct_base(Tp* tp);
 
-    Exp* exp();
-    void exp_base(Exp* exp);
-    void call_ornot(Exp* exp);
-    Call_Paralist* call_paralist();
-    void call_para(Call_Paralist* call_paralist);
-    void exp_tail(Exp* exp);
+    Exp* expr();
+    Exp* triexpr();
+    Exp* tritail(Exp* lval);
+    Exp* lorexpr();
+    Exp* lortail(Exp* lval);
+    Exp* landexpr();
+    Exp* landtail(Exp* lval);
+    Exp* borexpr();
+    Exp* bortail(Exp* lval);
+    Exp* bxorexpr();
+    Exp* bxortail(Exp* lval);
+    Exp* bandexpr();
+    Exp* bandtail(Exp* lval);
+    Exp* equexpr();
+    Exp* equtail(Exp* lval);
+    //Binop* equ_binop();
+    Exp* cmpexpr();
+    Exp* cmptail(Exp* lval);
+    //Binop* cmp_binop();
+    Exp* shiftexpr();
+    Exp* shifttail(Exp* lval);
+    //Binop* shift_binop();
+    Exp* aloexpr();
+    Exp* alotail(Exp* lval);
+    Exp* alo_binop(Exp* lval);
+    Exp* mlusexpr();
+    Exp* mulstail(Exp* lval);
+    //Binop* muls_binop();
+    Exp* unopexpr();
+    //Unop* unop();
+    Exp* elem();
+    Exp* idexpr(Exp* e);
+    Exp* realarg(Exp* e);
+    Exp* arg();
+    Exp* arglist(Exp* e);
+    Exp* allocs();
+    Exp* literal();
 
     Vid* vid();
     Sid* sid();
     Fid* fid();
-    Aid* aid();
-    Unop* unop();
-    Binop* binop();
     Asnop* asnop();
+    Aid* aid();
     Num* num();
     Str* str();
     Chr* chr();
     Bool* boo();
 
+    //Aid* match_aid();
+    bool next_is_aid();
+
 public:
 
     Prog* makeAST();
 
-    Parser(Lexer &lexer);
+    Parser(Lexer &lexer, Symtab &symtab);
     ~Parser();
 };

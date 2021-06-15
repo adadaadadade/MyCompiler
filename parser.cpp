@@ -1,21 +1,24 @@
 #include "parser.h"
 #include "error.h"
+#include "symbol.h"
 #include "symtab.h"
+#include "args.h"
 
 #define _(T) ||look->tag==T
 #define F(C) look->tag==C
 
-#define ISAID(id) F(ID)&&Symtab::get_typedef(id)!=NULL
+#define ISAID F(ID)&&(symtab.get_typedef(((Id*)look)->name)!=NULL)
 
-#define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)
-#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(AND)_(XOR)_(OR )_(LAND)_(LOR)
-#define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)_(ID)
+#define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)_(INC)_(DEC)
+#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(BAND)_(BXOR)_(BOR)_(LAND)_(LOR)
+#define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)||(ISAID)
 #define FEXP (FUNOP)_(LPAREN)_(NUMLIT)_(STRLIT)_(KW_TRUE)_(KW_FALSE)_(KW_NULL)_(KW_ALLOC)_(KW_ALLOC_ARRAY)_(MUL)_(ID)
 #define FSIMPLE (FEXP)_(ID)_(MUL)
 #define FSTMT (FSIMPLE)_(KW_IF)_(KW_WHILE)_(KW_FOR)_(KW_CONTINUE)_(KW_BREAK)_(KW_RETURN)_(LBRACE)_(KW_ASSERT)_(SEMICON)
-#define FLVTAIL F(DOT)_(SUB)_(LBRACK)
+#define FLVTAIL F(DOT)_(ARROW)_(LBRACK)
+#define FASNOP F(ASN)_(ASNADD)_(ASNSUB)_(ASNMUL)_(ASNDIV)_(ASNLMO)_(ASNRMO)_(ASNAND)_(ASNXOR)_(ASNOR)
 
-Parser::Parser(Lexer &x) : lexer(x)
+Parser::Parser(Lexer &lexer, Symtab &symtab) : lexer(lexer), symtab(symtab)
 {
 }
 
@@ -31,11 +34,14 @@ void Parser::output_error()
 void Parser::move()
 {
     look = lexer.nextToken();
+    if(Args::show_token)
+    {
+        printf("%s",look->toString().c_str());//输出词法记号——测试
+        if(look->tag == END)
+            printf("\n");
+    }
     if(look->tag == ERR || look->tag == COMMIT || look->tag == DEF)
         move();
-    //else
-    //if(Args::showToken)
-        printf("%s\n",look->toString().c_str());//输出词法记号——测试
 }
 
 bool Parser::match(TokenType t)
@@ -56,7 +62,8 @@ Prog* Parser::makeAST()
     Prog* ast;
     move();
     ast = prog();
-    //printf("prog\n");
+    if(Args::show_ast)
+        ast->print();
     return ast;
 }
 
@@ -88,6 +95,10 @@ void Parser::typedef_def(Prog* p)
     gdefn->aid =  aid(); gdefn->aid->set_parent(gdefn);
     match(SEMICON);
 
+    Var* v = new Var(gdefn->tp, gdefn->aid->name);
+    symtab.add_typedef(v);
+
+    gdefn->type = Gdefn::TYPEDEF;
     p->gdefn_list.push_back(gdefn); gdefn->set_parent(p);
     return;
 }
@@ -258,7 +269,7 @@ Decl* Parser::decl()
     d->vid = vid(); d->vid->set_parent(d);
     if(match(ASN))
     {
-        d->exp = exp(); d->exp->set_parent(d);
+        d->exp = expr(); d->exp->set_parent(d);
     }
     else
         d->exp = NULL;
@@ -283,13 +294,11 @@ Stmt* Parser::stmt()
     {
     case KW_IF:
         s->type = s->IF;
-        printf("here");
         match(KW_IF);
         match(LPAREN);
-        s->exp1 = exp(); s->exp1->set_parent(s);
+        s->exp1 = expr(); s->exp1->set_parent(s);
         match(RPAREN); 
         s->stmt1 = stmt(); s->stmt1->set_parent(s);
-        printf("here");
         if(match(KW_ELSE))
         {
             s->stmt2 = stmt(); s->stmt2->set_parent(s);
@@ -303,7 +312,7 @@ Stmt* Parser::stmt()
 
         match(KW_WHILE);
         match(LPAREN);
-        s->exp1 = exp(); s->exp1->set_parent(s);
+        s->exp1 = expr(); s->exp1->set_parent(s);
         match(RPAREN);
         s->stmt1 = stmt(); s->stmt1->set_parent(s);
         break;
@@ -346,7 +355,7 @@ Stmt* Parser::stmt()
         match(KW_RETURN);
         if(FEXP)
         {
-            s->exp1 = exp(); s->exp1->set_parent(s);
+            s->exp1 = expr(); s->exp1->set_parent(s);
         }
         match(SEMICON);
         break;
@@ -364,9 +373,9 @@ Stmt* Parser::stmt()
 
         match(KW_ASSERT);
         match(LPAREN);
-        s->exp1 = exp(); s->exp1->set_parent(s);
+        s->exp1 = expr(); s->exp1->set_parent(s);
         match(COMMA);
-        s->exp2 = exp(); s->exp2->set_parent(s);
+        s->exp2 = expr(); s->exp2->set_parent(s);
         match(RPAREN);
         match(SEMICON);
         break;
@@ -393,34 +402,32 @@ Stmt* Parser::stmt()
 Simple* Parser::simple()
 {
     Simple* si = new Simple();
-    if(FEXP)
+    if (F(ID)_(MUL))
+    {
+        si->lv = lv(); si->lv->set_parent(si);
+        if(FASNOP)
+        {
+            si->type = si->ASN;
+            si->asnop = asnop(); si->asnop->set_parent(si);
+            si->exp = expr(); si->exp->set_parent(si);
+        }
+        else if(match(INC))
+        {
+            si->type = si->ADDADD;
+        }
+        else if(match(DEC))
+        {
+            si->type = si->SUBSUB;
+        }
+    }
+    else if(FEXP)
     {
         si->type = si->EXP;
-
-        si->exp = exp();
+        si->exp = expr();
     }
     else
     {
-        si->lv = lv();
-        if(match(ADD))
-        {
-            si->type = si->ADDADD;
-
-            match(ADD);
-        }
-        else if(match(SUB))
-        {
-            si->type = si->SUBSUB;
-
-            match(SUB);
-        }
-        else
-        {
-            si->type = si->ASN;
-
-            si->asnop = asnop(); si->asnop->set_parent(si);
-            si->exp = exp(); si->exp->set_parent(si);
-        }
+        output_error();
     }
 
     return si;
@@ -449,7 +456,7 @@ Lv* Parser::lv()
 void Parser::lv_base(Lv* l)
 {
     Vid* v = vid();
-    l->vid = v;
+    l->vid = v; l->vid->set_parent(l);
 }
 
 
@@ -465,28 +472,23 @@ void Parser::lv_tail(Lv* l)
     while(FLVTAIL)
     {
         Lv* temp = new Lv();
-        i->lv_tail = temp;
+        i->lv_tail = temp; i->lv_tail->set_parent(i);
         i = temp;
         if(match(DOT))
         {
             i->type = i->LVDOTVID;
-            
             i->fid = fid(); i->fid->set_parent(i);
         }
-        else if(match(SUB))
+        else if(match(ARROW))
         {
             i->type = i->LVTOVID;
-
-            match(GTH);
             i->fid = fid(); i->fid->set_parent(i);
-
         }
         else if(match(LBRACK))
         {
             i->type = i->LVARRAY;
-
-            i->exp = exp(); i->exp->set_parent(i);
-            match(RBRACE);
+            i->exp = expr(); i->exp->set_parent(i);
+            match(RBRACK);
         }
     }
 }
@@ -519,10 +521,10 @@ void Parser::tp_base(Tp* tp)
         tp->type = tp->STRUCT;
         tp->sid = sid();
     }
-    else
+    else if(ISAID)
     {
         tp->type = tp->AID;
-        tp->aid = aid();
+        tp->aid = aid();tp->aid->set_parent(tp);
     }
 }
 
@@ -534,7 +536,7 @@ void Parser::tp_tail(Tp* tp)
     while(F(MUL)_(LBRACK))
     {
         Tp* temp = new Tp();
-        i->tp_tail = temp;
+        i->tp_tail = temp; i->tp_tail->set_parent(i);
         i = temp;
 
         if(match(MUL))
@@ -571,7 +573,7 @@ void Parser::tp_without_struct_base(Tp* tp)
         tp->type = tp->STRING;
     else if(match(KW_CHAR))
         tp->type = tp->CHAR;
-    else
+    else if(ISAID)
     {
         tp->type = tp->AID;
         tp->aid = aid(); tp->aid->set_parent(tp);
@@ -579,12 +581,12 @@ void Parser::tp_without_struct_base(Tp* tp)
 }
 
 
-
+/*
 Exp* Parser::exp()
 {
     Exp* e = new Exp();
 
-/*     if(FUNOP)
+     if(FUNOP)
     {
         e->type = e->UNOP;
 
@@ -592,7 +594,7 @@ Exp* Parser::exp()
         e->exp1 = exp(); e->exp1->set_parent(e);
     }
     else
-    { */
+    { 
     exp_base(e);
     exp_tail(e);
     //}
@@ -751,6 +753,492 @@ void Parser::call_para(Call_Paralist* call_paralist)
         call_paralist->exp_list.push_back((Node*)exp()); call_paralist->exp_list.back()->set_parent(call_paralist);
     }
 }
+*/
+Exp* Parser::expr()
+{
+    return triexpr();
+}
+
+Exp* Parser::triexpr()
+{
+    Exp* lval = lorexpr();
+    return tritail(lval);
+}
+
+
+Exp* Parser::tritail(Exp* lval)
+{
+    if(match(QUE))
+    {
+        Exp* e = new Exp();
+        e->type = e->TRI;
+
+        e->exp1 = lval; e->exp1->set_parent(e);
+        Exp* e2 = lorexpr();
+        e->exp2 = tritail(e2); e->exp2->set_parent(e);
+        match(COLON);
+        Exp* e3 = lorexpr();
+        e->exp3 = tritail(e3); e->exp3->set_parent(e);
+
+        return e;
+    }
+    return lval;
+}
+
+
+Exp* Parser::lorexpr()
+{
+    Exp* lval = landexpr();
+    return lortail(lval);
+}
+
+
+Exp* Parser::lortail(Exp* lval)
+{
+    if(match(LOR))
+    {
+        Exp* rval = landexpr();
+        Exp* result = Exp::binop_exp(lval, LOR, rval);
+        return lortail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::landexpr()
+{
+    Exp* lval = borexpr();
+    return landtail(lval);
+}
+
+
+Exp* Parser::landtail(Exp* lval)
+{
+    if(match(LAND))
+    {
+        Exp* rval = borexpr();
+        Exp* result = Exp::binop_exp(lval, LAND, rval);
+        return landtail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::borexpr()
+{
+    Exp* lval = bxorexpr();
+    return bortail(lval);
+}
+
+
+Exp* Parser::bortail(Exp* lval)
+{
+    if(match(BOR))
+    {
+        Exp* rval = bxorexpr();
+        Exp* result = Exp::binop_exp(lval, BOR, rval);
+        return bortail(result);
+    }
+    return lval;
+}
+
+Exp* Parser::bxorexpr()
+{
+    Exp* lval = bandexpr();
+    return bxortail(lval);
+}
+
+Exp* Parser::bxortail(Exp* lval)
+{
+    if(match(BXOR))
+    {
+        Exp* rval = bandexpr();
+        Exp* result = Exp::binop_exp(lval, BXOR, rval);
+        return bxortail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::bandexpr()
+{
+    Exp* lval = equexpr();
+    return bandtail(lval);
+}
+
+
+Exp* Parser::bandtail(Exp* lval)
+{
+    if(match(BAND))
+    {
+        Exp* rval = equexpr();
+        Exp* result = Exp::binop_exp(lval, BAND, rval);
+        return bandtail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::equexpr()
+{
+    Exp* lval = cmpexpr();
+    return equtail(lval);
+}
+
+
+Exp* Parser::equtail(Exp* lval)
+{
+    if(match(EQU))
+    {
+        Exp* rval = cmpexpr();
+        Exp* result = Exp::binop_exp(lval, EQU, rval);
+        return equtail(result);
+    }
+    else if(match(NEQ))
+    {
+        Exp* rval = cmpexpr();
+        Exp* result = Exp::binop_exp(lval, NEQ, rval);
+        return equtail(result);
+    }
+    return lval;
+}
+
+Exp* Parser::cmpexpr()
+{
+    Exp* lval = shiftexpr();
+    return cmptail(lval);
+}
+
+
+Exp* Parser::cmptail(Exp* lval)
+{
+    if(match(LTH))
+    {
+        Exp* rval = shiftexpr();
+        Exp* result = Exp::binop_exp(lval, LTH, rval);
+        return cmptail(result);
+    }
+    else if(match(GTH))
+    {
+        Exp* rval = shiftexpr();
+        Exp* result = Exp::binop_exp(lval, GTH, rval);
+        return cmptail(result);
+    }
+    else if(match(LET))
+    {
+        Exp* rval = shiftexpr();
+        Exp* result = Exp::binop_exp(lval, LET, rval);
+        return cmptail(result);
+    }
+    else if(match(GET))
+    {
+        Exp* rval = shiftexpr();
+        Exp* result = Exp::binop_exp(lval, GET, rval);
+        return cmptail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::shiftexpr()
+{
+    Exp* lval = aloexpr();
+    return shifttail(lval);
+}
+
+
+Exp* Parser::shifttail(Exp* lval)
+{
+    if(match(LMO))
+    {
+        Exp* rval = aloexpr();
+        Exp* result = Exp::binop_exp(lval, LMO, rval);
+        return shifttail(result);
+    }
+    else if(match(RMO))
+    {
+        Exp* rval = aloexpr();
+        Exp* result = Exp::binop_exp(lval, RMO, rval);
+        return shifttail(result);
+    }
+    return lval;
+}
+
+
+Exp* Parser::aloexpr()
+{
+    Exp* lval = mlusexpr();
+    return alotail(lval);
+}
+
+
+Exp* Parser::alotail(Exp* lval)
+{
+    if(match(ADD))
+    {
+        Exp* rval = mlusexpr();
+        Exp* result = Exp::binop_exp(lval, ADD, rval);
+        return alotail(result);
+    }
+    else if(match(SUB))
+    {
+        Exp* rval = mlusexpr();
+        Exp* result = Exp::binop_exp(lval, SUB, rval);
+        return alotail(result);
+    }
+    return lval;
+}
+
+
+
+Exp* Parser::mlusexpr()
+{
+    Exp* lval = unopexpr();
+    return mulstail(lval);
+}
+
+
+Exp* Parser::mulstail(Exp* lval)
+{
+    if(match(MUL))
+    {
+        Exp* rval = unopexpr();
+        Exp* result = Exp::binop_exp(lval, MUL, rval);
+        return mulstail(result);
+    }
+    else if(match(DIV))
+    {
+        Exp* rval = unopexpr();
+        Exp* result = Exp::binop_exp(lval, DIV, rval);
+        return mulstail(result);
+    }
+    else if(match(MOD))
+    {
+        Exp* rval = unopexpr();
+        Exp* result = Exp::binop_exp(lval, MOD, rval);
+        return mulstail(result);
+    }
+
+    return lval;
+}
+
+
+
+Exp* Parser::unopexpr()
+{
+    if(match(NOT))
+    {
+        Exp* e = unopexpr();
+        return Exp::unop_exp(NOT, e);
+    }
+    else if(match(BNEG))
+    {   
+        Exp* e = unopexpr();
+        return Exp::unop_exp(BNEG, e);
+    }
+    else if(match(SUB))
+    {
+        Exp* e = unopexpr();
+        return Exp::unop_exp(SUB, e);
+    }
+    else if(match(MUL))
+    {
+        Exp* e = unopexpr();
+        return Exp::unop_exp(MUL, e);
+    }
+    else if(match(INC))
+    {
+        Exp* e = unopexpr();
+        return Exp::unop_exp(INC, e);
+    }
+    else if(match(DEC))
+    {
+        Exp* e = unopexpr();
+        return Exp::unop_exp(DEC, e);
+    }
+    else
+    {
+        return elem();
+    }
+}
+
+/*
+<elem> ::= LPAREN <expr> RPAREN
+    | ID <idexpr>
+    | <literal>
+*/
+Exp* Parser::elem()
+{
+    Exp* e = new Exp();
+    if(match(LPAREN))
+    {
+        e->type = Exp::PAREN;
+        e->exp1 = expr(); e->exp1->set_parent(e);
+        match(RPAREN);
+        return e;
+    }
+    else if(F(ID))
+    {
+        e->type = Exp::VID;
+        e->vid = vid(); e->vid->set_parent(e);
+        idexpr(e);
+        return(e);
+    }
+    else if (F(KW_ALLOC)_(KW_ALLOC_ARRAY))
+    {
+        return allocs();
+    }
+    else
+    {
+        return literal();
+    }
+}
+
+
+Exp* Parser::idexpr(Exp* e)
+{
+    Exp* exp = new Exp();
+    if(match(LBRACK))
+    {
+        exp = expr();
+        e->exp1 = exp; e->exp1->set_parent(e);
+        exp->type = Exp::ARRAY;
+        match(RBRACK);
+        return idexpr(exp);
+
+    }
+    else if(match(LPAREN))
+    {
+        exp = expr();
+        e->exp1 = exp; e->exp1->set_parent(e);
+        exp->type = Exp::FUNC;
+        match(RPAREN);
+        return idexpr(exp);
+    }
+    else if(match(DOT))
+    {
+        exp->fid = fid(); exp->fid->set_parent(e);
+        e->exp1 = exp; e->exp1->set_parent(e);
+        exp->type = Exp::DOTFID;
+        return idexpr(exp);
+    }
+    else if(match(ARROW))
+    {
+        exp->fid = fid(); exp->fid->set_parent(e);
+        e->exp1 = exp; e->exp1->set_parent(e);
+        exp->type = Exp::TOFID;
+        return idexpr(exp);
+    }
+    return e;
+}
+
+
+Exp* Parser::realarg(Exp* e)
+{
+    if(FEXP)
+    {
+        Exp* a = arg();
+        return arglist(a);
+    }
+    return e;
+}
+
+
+Exp* Parser::arg()
+{
+    return expr();
+}
+
+
+Exp* Parser::arglist(Exp* e)
+{
+    if(match(COMMA))
+    {
+        Exp* next = arg();
+        Exp* list = new Exp();
+        list->exp_tail = next; list->exp_tail->set_parent(list);
+        return arglist(list);
+    }
+    return e;
+}
+
+
+Exp* Parser::allocs()
+{
+    Exp* exp = new Exp();
+    if(match(KW_ALLOC))
+    {
+        exp->type = Exp::ALLOC;
+
+        match(LPAREN);
+        exp->tp = tp(); exp->tp->set_parent(exp);
+        match(RPAREN);
+        return exp;
+    }
+    else if(match(KW_ALLOC_ARRAY))
+    {
+        exp->type = Exp::ALLOCARRAY;
+        
+        match(LPAREN);
+        exp->tp = tp(); exp->tp->set_parent(exp);
+        match(COMMA);
+        exp->exp1 = expr(); exp->exp1->set_parent(exp);
+        match(RPAREN);
+        return exp;
+    }
+    else
+    {
+        output_error();
+    }
+}
+
+
+Exp* Parser::literal()
+{
+    Exp* lit = new Exp();
+    if(look->tag == NUMLIT)
+    {
+        lit->type = Exp::NUMLIT;
+        lit->numlit = ((Numlit*)look)->val;
+        match(NUMLIT);
+        return lit;
+    }
+    else if(look->tag == CHRLIT)
+    {
+        lit->type = Exp::CHRLIT;
+        lit->chrlit = ((Chrlit*)look)->ch;
+        match(CHRLIT);
+        return lit;
+    }
+    else if(look->tag == STRLIT)
+    {
+        lit->type = Exp::STRLIT;
+        lit->strlit = ((Strlit*)look)->str;
+        match(STRLIT);
+        return lit;
+    }
+    else if(match(KW_TRUE))
+    {
+        lit->type = Exp::TRUELIT;
+        return lit;
+    }
+    else if(match(KW_FALSE))
+    {
+        lit->type = Exp::FALSELIT;
+        return lit;
+    }
+    else if(match(KW_NULL))
+    {
+        lit->type = Exp::NULLLIT;
+        return lit;
+    }
+    else
+    {
+        output_error();
+    }
+}
+
+
 
 
 Vid* Parser::vid()
@@ -808,8 +1296,6 @@ Aid* Parser::aid()
     {
         a->name = ((Id*)look)->name;
         match(ID);
-        //Var* v = new Var(Tp());
-        //symtab::add_typedef(v);
     }
     else
     {
@@ -876,7 +1362,7 @@ Bool* Parser::boo()
     return b;
 }
 
-
+/*
 Unop* Parser::unop()
 {
     Unop* op = new Unop();
@@ -893,14 +1379,29 @@ Unop* Parser::unop()
         break;
     
     case SUB:
-        op->type = op->SUB;
         match(SUB);
+        if(match(SUB))
+        {
+            op->type = op->DEC;
+        }
+        else
+        {
+            op->type = op->SUB;
+        }
         break;
     
     case MUL:
         op->type = op->MUL;
         match(MUL);
         break;
+
+    case ADD:
+        op->type = op->INC;
+        match(ADD);
+        if(!match(ADD))
+            output_error();
+        break;
+
     default:
         output_error();
         break;
@@ -1000,7 +1501,7 @@ Binop* Parser::binop()
     }
     return op;
 }
-
+*/
 
 Asnop* Parser::asnop()
 {

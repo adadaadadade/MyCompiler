@@ -1,5 +1,7 @@
 #include "ast.h"
 
+#define P(x) if(x)x->print()
+
 string Node::toString()
 {
     return "Node";
@@ -50,13 +52,18 @@ string Prog::get_nodetype()
     return this->nodetype;
 }
 
+string Gdecl::TypeName[] = {
+    "STRUCTDECL",
+    "FUNCDECL"
+};
+
 Gdecl::Gdecl()
 {
 }
 
 string Gdecl::toString()
 {
-    return "Gdecl: " + to_string(type);
+    return "Gdecl: " + TypeName[type];
 }
 
 void Gdecl::print()
@@ -87,6 +94,11 @@ string Gdecl::get_nodetype()
     return this->nodetype;
 }
 
+string Gdefn::TypeName[] = {
+    "STRUCTDEFN",
+    "FUNCDEFN",
+    "TYPEDEF"
+};
 
 Gdefn::Gdefn()
 {
@@ -94,7 +106,7 @@ Gdefn::Gdefn()
 
 string Gdefn::toString()
 {
-    return "Gdefn: " + to_string(type);
+    return "Gdefn: " + TypeName[type];
 }
 
 void Gdefn::print()
@@ -102,26 +114,17 @@ void Gdefn::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
-    switch (type)
+    P(sid);
+    for(int i = 0; i < tp_list.size(); i ++)
     {
-    case STRUCTDEFN:
-        /* code */
-        break;
-    
-    case FUNCDEFN:
-        tp->print();
-        vid->print();
-        pl->print();
-        body->print();
-        break;
-    
-    case TYPEDEF:
-        /* code */
-        break;
-    
-    default:
-        break;
+        tp_list[i]->print();
+        fid_list[i]->print();
     }
+    P(pl);
+    P(tp);
+    P(vid);
+    P(body);
+    P(aid);
 }
 
 string Gdefn::get_nodetype()
@@ -145,9 +148,10 @@ void Paralist::print()
         printf("\t");
     cout << toString() << endl;
     for(int i = 0; i < tp_list.size(); i ++)
+    {
         tp_list[i]->print();
-    for(int i = 0; i < vid_list.size(); i ++)
         vid_list[i]->print();
+    }
 }
 
 string Paralist::get_nodetype()
@@ -155,7 +159,7 @@ string Paralist::get_nodetype()
     return this->nodetype;
 }
 
-
+/*
 Call_Paralist::Call_Paralist()
 {
 }
@@ -170,13 +174,15 @@ void Call_Paralist::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
+
+
 }
 
 string Call_Paralist::get_nodetype()
 {
     return this->nodetype;
 }
-
+*/
 
 Body::Body()
 {
@@ -218,10 +224,11 @@ void Decl::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
-    tp->print();
-    vid->print();
-    if(exp != NULL)
-        exp->print();
+    
+    P(tp);
+    P(vid);
+    P(exp);
+
 }
 
 string Decl::get_nodetype()
@@ -229,6 +236,18 @@ string Decl::get_nodetype()
     return this->nodetype;
 }
 
+string Stmt::TypeName[] = {
+    "SIMPLE",
+    "IF",
+    "WHILE",
+    "FOR",
+    "CONTINUE",
+    "BREAK",
+    "RETURN",
+    "BODY",
+    "ASSERT",
+    "EMPTY"
+};
 
 Stmt::Stmt()
 {
@@ -236,7 +255,7 @@ Stmt::Stmt()
 
 string Stmt::toString()
 {
-    return "Stmt: " + to_string(type);
+    return "Stmt: " + TypeName[type];
 }
 
 void Stmt::print()
@@ -244,6 +263,14 @@ void Stmt::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
+
+    P(simple1);
+    P(simple2);
+    P(exp1);
+    P(exp2);
+    P(stmt1);
+    P(stmt2);
+    P(body);
 }
 
 string Stmt::get_nodetype()
@@ -251,6 +278,12 @@ string Stmt::get_nodetype()
     return this->nodetype;
 }
 
+string Simple::TypeName[] = {
+    "ASN",
+    "ADDADD",
+    "SUBSUB",
+    "EXP"
+};
 
 Simple::Simple()
 {
@@ -258,7 +291,7 @@ Simple::Simple()
 
 string Simple::toString()
 {
-    return "Simple: " + to_string(type);
+    return "Simple: " + TypeName[type];
 }
 
 void Simple::print()
@@ -266,6 +299,10 @@ void Simple::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
+
+    P(lv);
+    P(asnop);
+    P(exp);
 }
 
 string Simple::get_nodetype()
@@ -274,13 +311,21 @@ string Simple::get_nodetype()
 }
 
 
+string Lv::TypeName[] = {
+    "VID",
+    "LVDOTVID",
+    "LVTOVID",
+    "LVPOINTER",
+    "LVARRAY"
+};
+
 Lv::Lv()
 {
 }
 
 string Lv::toString()
 {
-    return "Lv: " + to_string(type);
+    return "Lv: " + TypeName[type];
 }
 
 void Lv::print()
@@ -288,6 +333,12 @@ void Lv::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
+
+    P(vid);
+    P(lv);
+    P(fid);
+    P(exp);
+    P(lv_tail);
 }
 
 string Lv::get_nodetype()
@@ -295,6 +346,16 @@ string Lv::get_nodetype()
     return this->nodetype;
 }
 
+string Tp::TypeName[] = {
+    "INT",
+    "BOOL",
+    "STRING",
+    "CHAR",
+    "POINTER",
+    "ARRAY",
+    "STRUCT",
+    "AID"
+};
 
 Tp::Tp()
 {
@@ -306,7 +367,7 @@ Tp::Tp(TpType type):type(type)
 
 string Tp::toString()
 {
-    return "Tp: " + to_string(type);
+    return "Tp: " + TypeName[type];
 }
 
 void Tp::print()
@@ -314,43 +375,12 @@ void Tp::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
-    switch (type)
-    {
-    case INT:
-        
-        break;
     
-    case BOOL:
-        
-        break;
-    
-    case STRING:
-        
-        break;
-    
-    case CHAR:
-        
-        break;
-    
-    case POINTER:
-        tp_tail->print();
-        break;
-    
-    case ARRAY:
-        tp_tail->print();
-        break;
-    
-    case STRUCT:
-        sid->print();
-        break;
-    
-    case AID:
-        aid->print();
-        break;
-    
-    default:
-        break;
-    }
+    P(tp);
+    P(sid);
+    P(aid);
+    P(tp_tail);
+
 }
 
 string Tp::get_nodetype()
@@ -358,14 +388,63 @@ string Tp::get_nodetype()
     return this->nodetype;
 }
 
+string Exp::TypeName[] = {
+    "PAREN",
+    "NUMLIT",
+    "STRLIT",
+    "CHRLIT",
+    "TRUELIT",
+    "FALSELIT",
+    "NULLLIT",
+    "VID",
+    "BINOP",
+    "UNOP",
+    "TRI",
+    "FUNC",
+    "DOTFID",
+    "TOFID",
+    "ARRAY",
+    "POINTER",
+    "ALLOC",
+    "ALLOCARRAY"
+};
 
 Exp::Exp()
 {
 }
 
+Exp* Exp::binop_exp(Exp* lval,TokenType tag, Exp* rval)
+{
+    Exp* result = new Exp();
+    result->type = BINOP;
+    result->exp1 = lval; result->exp1->set_parent(result);
+    result->exp2 = rval; result->exp2->set_parent(result);
+    result->tag = tag;
+
+    return result;
+}
+
+Exp* Exp::unop_exp(TokenType tag, Exp* e)
+{
+    Exp* result = new Exp();
+    result->type = UNOP;
+    result->exp1 = e; result->exp1->set_parent(e);
+    result->tag = tag;
+
+    return result;
+}
+
 string Exp::toString()
 {
-    return "Exp: " + to_string(type);
+    if(type == BINOP)
+        return "Exp: " + TypeName[type] + ",val:" + to_string(tag);
+    if(type == NUMLIT)
+        return "Exp: " + TypeName[type] + ",val:" + to_string(numlit);
+    if(type == CHRLIT)
+        return "Exp: " + TypeName[type] + ",val:" + to_string(chrlit);
+    if(type == STRLIT)
+        return "Exp: " + TypeName[type] + ",val:" + strlit;
+    return "Exp: " + TypeName[type];
 }
 
 void Exp::print()
@@ -373,83 +452,29 @@ void Exp::print()
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
     cout << toString() << endl;
-    switch (type)
-    {
-    case NUMLIT:
-        numlit->print();
-        break;
-    
-    case STRLIT:
-        numlit->print();
-        break;
-    
-    case CHRLIT:
-        numlit->print();
-        break;
-    
-    case BOOL:
-        numlit->print();
-        break;
-    
-    case NULLTYPE:
-        numlit->print();
-        break;
-    
-    case VID:
-        numlit->print();
-        break;
-    
-    case BINOP:
-        numlit->print();
-        break;
-    
-    case UNOP:
-        numlit->print();
-        break;
-    
-    case TRI:
-        numlit->print();
-        break;
-    
-    case FUNC:
-        numlit->print();
-        break;
-    
-    case DOTFID:
-        numlit->print();
-        break;
-    
-    case TOFID:
-        numlit->print();
-        break;
-    
-    case ARRAY:
-        
-        break;
-    
-    case POINTER:
-        numlit->print();
-        break;
-    
-    case ALLOC:
-        numlit->print();
-        break;
-    
-    case ALLOCARRAY:
-        numlit->print();
-        break;
-    
-    default:
-        break;
-    }
-    if(exp_tail != NULL)
-        exp_tail->print();
+    P(exp1);
+    P(exp2);
+    P(exp3);
+    P(vid);
+    P(fid);
+    P(tp);
+    P(exp_tail);
 }
 
 string Exp::get_nodetype()
 {
     return this->nodetype;
 }
+
+/*
+string Unop::TypeName[] = {
+    "NOT",
+    "BNEG",
+    "SUB",
+    "MUL",
+    "INC",
+    "DEC"
+};
 
 
 Unop::Unop()
@@ -458,7 +483,7 @@ Unop::Unop()
 
 string Unop::toString()
 {
-    return "Unop: " + to_string(type);
+    return "Unop: " + TypeName[type];
 }
 
 void Unop::print()
@@ -480,7 +505,7 @@ Binop::Binop()
 
 string Binop::toString()
 {
-    return "Binop: " + to_string(type);
+    return "Binop: " + TypeName[type];
 }
 
 void Binop::print()
@@ -494,7 +519,21 @@ string Binop::get_nodetype()
 {
     return this->nodetype;
 }
+*/
 
+string Asnop::TypeName[] = {
+    "ASN",
+    "ASNADD",
+    "ASNSUB",
+    "ASNMUL",
+    "ASNDIV",
+    "ASNMOD",
+    "ASNLMO",
+    "ASNRMO",
+    "ASNAND",
+    "ASNXOR",
+    "ASNOR"
+};
 
 Asnop::Asnop()
 {
@@ -502,7 +541,7 @@ Asnop::Asnop()
 
 string Asnop::toString()
 {
-    return "Asnop: " + to_string(type);
+    return "Asnop: " + TypeName[type];
 }
 
 void Asnop::print()

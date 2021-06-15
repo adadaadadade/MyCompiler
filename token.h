@@ -10,13 +10,14 @@ enum TokenType
 	ERR, END,
 	//ops
 	//BINOPS1
-	NOT, BNEG,	// ! ~ 
+	NOT, BNEG, INC, DEC,	// ! ~ 
 	ADD, SUB, MUL, DIV, MOD,	// | + | - | * | / | % 
 	LMO, RMO,				// | << | >>
-	LTH, GTH, EQU, NEQ,						// | < | > | == | != 
-	AND, XOR, OR , LAND, LOR,						// | & | ^ | | | && | ||		
+	LTH, GTH, LET, GET, 				// | < | > | <= | >=
+	EQU, NEQ,						// | == | != 
+	BAND, BXOR, BOR , LAND, LOR,						// | & | ^ | | | && | ||		
 	ASN, ASNADD, ASNSUB, ASNMUL, ASNDIV, ASNMOD, ASNLMO, ASNRMO, ASNAND, ASNXOR, ASNOR,//  = | += | -= | *= | /= | %= | <<= | >>=| &= | ^= | |=
-	QUE, DOT,
+	QUE, DOT, ARROW,
 	ID,			// [A-Za-z_][A-Za-z0-9_]*
 	NUMLIT,		// <decnum> | <hexnum>
 	STRLIT,		// "<schar>*"

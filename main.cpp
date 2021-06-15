@@ -6,30 +6,20 @@
 #include "symtab.h"
 #include "keywords.h"
 #include "util.h"
-
+#include "args.h"
 
 int main(int argc, char *argv[])
-{
-    vector<char *> srcfiles;//源文件
+{    
+    Args args;
+    Args::get_args(argc, argv);
     
-    if(argc > 1)
-    {
-        for(int i = 1; i < argc; i ++){//取最后一个参数之前的参数
-			srcfiles.push_back(argv[i]);
-		}
-        Scanner scanner(srcfiles[0]);
-        KeyWords();
-        Lexer lexer(scanner);
-        Symtab symtab;
-        Parser parser(lexer);
-        Prog* ast = parser.makeAST();
-        ast->print();
-        //outputScanner(scanner);
-        //outputTokens(lexer);
-    }
-    else
-    {
-
-    }
-    return 0;
+    Scanner scanner(Args::srcfiles[0]);
+    KeyWords();
+    Lexer lexer(scanner);
+    
+    Symtab symtab;
+    Parser parser(lexer, symtab);
+    Prog* ast = parser.makeAST();
+    
+    //outputTokens(lexer);
 }

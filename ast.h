@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "token.h"
 
 class Node
 {
@@ -13,7 +14,7 @@ public:
     virtual string get_nodetype();
     virtual void set_parent(Node* par);
 };
-
+/*
 class Unop : public Node
 {
     const string nodetype = "Unop";
@@ -23,9 +24,11 @@ public:
         NOT,
         BNEG,
         SUB,
-        MUL
+        MUL,
+        INC,
+        DEC
     };
-    
+    static string TypeName[];
     UnopType type;
 
     Unop();
@@ -57,6 +60,7 @@ public:
         LAND,
         LOR
     };
+    static string TypeName[];
     BinopType type;
 
     Binop();
@@ -64,7 +68,7 @@ public:
     virtual void print();
     virtual string get_nodetype();
 };
-
+*/
 class Asnop : public Node
 {
     const string nodetype = "Asnop";
@@ -83,6 +87,7 @@ public:
         ASNXOR,
         ASNOR
     };
+    static string TypeName[];
     AsnopType type;
 
     Asnop();
@@ -206,6 +211,7 @@ public:
         STRUCT,
         AID
     };
+    static string TypeName[];
     TpType type;
 
     Tp *tp;
@@ -234,7 +240,7 @@ public:
     virtual void print();
     virtual string get_nodetype();
 };
-
+/*
 class Call_Paralist : public Node
 {
     const string nodetype = "Call_Paralist";
@@ -246,7 +252,7 @@ public:
     virtual void print();
     virtual string get_nodetype();
 };
-
+*/
 
 class Exp : public Node
 {
@@ -254,12 +260,13 @@ class Exp : public Node
 public:
     enum ExpType
     {
-        EXP,
+        PAREN,
         NUMLIT,
         STRLIT,
         CHRLIT,
-        BOOL,
-        NULLTYPE,
+        TRUELIT,
+        FALSELIT,
+        NULLLIT,
         VID,
         BINOP,
         UNOP,
@@ -272,28 +279,29 @@ public:
         ALLOC,
         ALLOCARRAY
     };
+    static string TypeName[];
     ExpType type;
+    TokenType tag;
 
-    Unop *unop;
+    //Unop *unop;
     Exp *exp1;
     Exp *exp2;
     Exp *exp3;
     Exp *exp_tail;
-    Num *numlit;
-    Str *strlit;
-    Chr *chrlit;
-    Bool *boollit;
-    Call_Paralist* cpl;
-    Binop* binop;
+    int numlit;
+    char chrlit;
+    string strlit;
+    bool boollit;
 
     Vid *vid;
-    vector<Vid *> vid_list;
 
     Fid *fid;
     Tp *tp;
 
-
+    const static int a = 0;
     Exp();
+    static Exp* binop_exp(Exp* lval,TokenType tag, Exp* rval);
+    static Exp* unop_exp(TokenType tag, Exp* e);
     virtual string toString();
     virtual void print();
     virtual string get_nodetype();
@@ -338,6 +346,7 @@ public:
         LVPOINTER,
         LVARRAY
     };
+    static string TypeName[];
     LvType type;
 
     Vid *vid;
@@ -363,6 +372,7 @@ public:
         SUBSUB,
         EXP
     };
+    static string TypeName[];
     SimpleType type;
 
     Lv *lv;
@@ -392,6 +402,7 @@ public:
         ASSERT,
         EMPTY
     };
+    static string TypeName[];
     StmtType type;
 
     Simple *simple1;
@@ -419,7 +430,7 @@ public:
         STRUCTDECL,
         FUNCDECL
     };
-
+    static string TypeName[];
     GdeclType type;
 
     Vid *vid;
@@ -443,6 +454,7 @@ public:
         FUNCDEFN,
         TYPEDEF
     };
+    static string TypeName[];
     GdefnType type;
 
     Sid *sid;

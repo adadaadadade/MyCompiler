@@ -1,5 +1,6 @@
 #include "scanner.h"
 #include "error.h"
+#include "args.h"
 
 Scanner::Scanner(char* srcName)
 {
@@ -58,6 +59,9 @@ char Scanner::nextChar()//基于缓冲区的字符扫描算法,文件扫描接�
     else if(ch != '\n')
         colNum ++;
     lastch = ch;
+    
+    if(Args::show_char)
+        printf("%c", ch);
     
     return ch;
 }
