@@ -70,7 +70,7 @@ void Gdecl::print()
 {
     for(int i = 0; i < (deep = parent->deep + 1); i ++)
         printf("\t");
-    cout << toString() << type << endl;
+    cout << toString() << endl;
     switch (type)
     
     {
@@ -437,7 +437,7 @@ Exp* Exp::unop_exp(TokenType tag, Exp* e)
 string Exp::toString()
 {
     if(type == BINOP)
-        return "Exp: " + TypeName[type] + ",val:" + to_string(tag);
+        return "Exp: " + TypeName[type] + ",val:" + tokenName[tag];
     if(type == NUMLIT)
         return "Exp: " + TypeName[type] + ",val:" + to_string(numlit);
     if(type == CHRLIT)

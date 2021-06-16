@@ -11,7 +11,7 @@
 
 #define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)_(INC)_(DEC)
 #define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(BAND)_(BXOR)_(BOR)_(LAND)_(LOR)
-#define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)||(ISAID)
+#define FTP F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)_(KW_STRUCT)||(ISAID)
 #define FEXP (FUNOP)_(LPAREN)_(NUMLIT)_(STRLIT)_(KW_TRUE)_(KW_FALSE)_(KW_NULL)_(KW_ALLOC)_(KW_ALLOC_ARRAY)_(MUL)_(ID)
 #define FSIMPLE (FEXP)_(ID)_(MUL)
 #define FSTMT (FSIMPLE)_(KW_IF)_(KW_WHILE)_(KW_FOR)_(KW_CONTINUE)_(KW_BREAK)_(KW_RETURN)_(LBRACE)_(KW_ASSERT)_(SEMICON)
@@ -327,6 +327,11 @@ Stmt* Parser::stmt()
             s->simple1 = simple(); s->simple1->set_parent(s);
         }
         match(SEMICON);
+        if(FEXP)
+        {
+            s->exp1 = expr(); s->exp1->set_parent(s);
+        }
+        match(SEMICON);
         if(FSIMPLE)
         {
             s->simple2 = simple(); s->simple2->set_parent(s);
@@ -519,7 +524,7 @@ void Parser::tp_base(Tp* tp)
     else if(match(KW_STRUCT))
     {
         tp->type = tp->STRUCT;
-        tp->sid = sid();
+        tp->sid = sid(); tp->sid->set_parent(tp);
     }
     else if(ISAID)
     {
