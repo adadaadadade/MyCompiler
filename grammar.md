@@ -86,35 +86,9 @@
 <tp_without_struct_base>::= KW_INT | KW_BOOL | KW_STRING | KW_CHAR
     | <aid>
 
-<tp_tail> ::= MUL <tp_tail> | LBRACK RBRACK <tp_tail>
+<tp_tail> ::= MUL <tp_tail> | LBRACK <literal> RBRACK <tp_tail>
     | $
 
-~~~
-<exp> ::= <exp_base> <exp_tail>
-
-<exp_base> ::= LPAREN <exp> RPAREN
-    | NUMLIT | STRLIT | CHRLIT | KW_TRUE | KW_FALSE | KW_NULL
-    | KW_ALLOC LPAREN <tp> RPAREN | KW_ALLOC_ARRAY LPAREN <tp> COMMA <exp> RPAREN
-    | MUL <exp>
-    | <unop> <exp>
-    | <vid> LPAREN <call_ornot> RPAREN
-    | <vid> LBRACK <exp> RBRACK
-
-<call_ornot> ::=  <call_paralist>  
-    | $
-
-<call_paralist> ::= <exp> <call_para> 
-    | $
-
-<call_para> ::= COMMA <exp> 
-    | $
-
-<exp_tail> ::= <binop> <exp> <exp_tail>
-    | QUE <exp> COLON <exp> <exp_tail>
-    | DOT <fid> | <exp> SUB GTH <fid> <exp_tail>
-    | LBRACK <exp> RBRACK <exp_tail>
-    | $
-~~~
 <expr> ::= <triexpr>
 
 <triexpr> ::= <lorexpr> <tritail> 

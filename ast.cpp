@@ -1,6 +1,9 @@
 #include "ast.h"
+#include "symtab.h"
 
 #define P(x) if(x)x->print()
+
+extern const string tokenName[];
 
 string Node::toString()
 {
@@ -38,10 +41,8 @@ void Prog::print()
         printf("\t");
     
     cout << toString() << endl;
-    for(int i = 0; i < this->gdecl_list.size(); i ++)
-        this->gdecl_list[i]->print();
-    for(int i = 0; i < this->gdefn_list.size(); i ++)
-        this->gdefn_list[i]->print();
+    for(int i = 0; i < this->gdecl_gdefn_list.size(); i ++)
+        this->gdecl_gdefn_list[i]->print();
     
     //programs->print();
     //next->print();
@@ -63,7 +64,7 @@ Gdecl::Gdecl()
 
 string Gdecl::toString()
 {
-    return "Gdecl: " + TypeName[type];
+    return "Gdecl : " + TypeName[type];
 }
 
 void Gdecl::print()
@@ -106,7 +107,7 @@ Gdefn::Gdefn()
 
 string Gdefn::toString()
 {
-    return "Gdefn: " + TypeName[type];
+    return "Gdefn : " + TypeName[type];
 }
 
 void Gdefn::print()
@@ -255,7 +256,7 @@ Stmt::Stmt()
 
 string Stmt::toString()
 {
-    return "Stmt: " + TypeName[type];
+    return "Stmt : " + TypeName[type];
 }
 
 void Stmt::print()
@@ -291,7 +292,7 @@ Simple::Simple()
 
 string Simple::toString()
 {
-    return "Simple: " + TypeName[type];
+    return "Simple : " + TypeName[type];
 }
 
 void Simple::print()
@@ -363,11 +364,36 @@ Tp::Tp()
 
 Tp::Tp(TpType type):type(type)
 {
+    switch (type)
+    {
+    case Tp::INT:
+        size = 4;
+        break;
+    case Tp::CHAR:
+        size = 2;
+        break;
+    case Tp::BOOL:
+        size = 2;
+        break;
+    case Tp::STRING:
+        
+        break;
+    case Tp::STRUCT:
+        
+        break;
+    case Tp::ARRAY:
+        
+        break;
+    default:
+        break;
+    }
 }
 
 string Tp::toString()
 {
-    return "Tp: " + TypeName[type];
+    if (type == ARRAY)
+        return "Tp : " + TypeName[type] + ", size : " +to_string(size);
+    return "Tp : " + TypeName[type];
 }
 
 void Tp::print()
@@ -376,7 +402,7 @@ void Tp::print()
         printf("\t");
     cout << toString() << endl;
     
-    P(tp);
+    //P(tp);
     P(sid);
     P(aid);
     P(tp_tail);
@@ -387,14 +413,52 @@ string Tp::get_nodetype()
 {
     return this->nodetype;
 }
+/*
+int Tp::get_base_size()
+{
+    switch (type)
+    {
+    case INT:
+        base_size = int_size;
+        break;
+    case CHAR:
+        base_size = char_size;
+        break;
+    case BOOL:
+        base_size = bool_size;
+        break;
+    case POINTER:
+        base_size = pointer_size;
+        break;
+    case STRING:
+        base_size = string_size;
+        break;
+    case STRUCT:
+        base_size = string_size;
+        break;
+    case AID:
+        //base_size = Symtab::get_typedef(aid->name);
+        break;
+    case ARRAY:
+        //base_size = string_size;
+        break;
+    default:
+        break;
+    }
+    return base_size;
+}
 
+int Tp::get_size()
+{
+
+}
+*/
 string Exp::TypeName[] = {
     "PAREN",
     "NUMLIT",
     "STRLIT",
     "CHRLIT",
-    "TRUELIT",
-    "FALSELIT",
+    "BOOLIT",
     "NULLLIT",
     "VID",
     "BINOP",
@@ -437,14 +501,14 @@ Exp* Exp::unop_exp(TokenType tag, Exp* e)
 string Exp::toString()
 {
     if(type == BINOP)
-        return "Exp: " + TypeName[type] + ",val:" + tokenName[tag];
+        return "Exp : " + TypeName[type] + ",val :" + tokenName[tag];
     if(type == NUMLIT)
-        return "Exp: " + TypeName[type] + ",val:" + to_string(numlit);
+        return "Exp : " + TypeName[type] + ",val :" + to_string(numlit);
     if(type == CHRLIT)
-        return "Exp: " + TypeName[type] + ",val:" + to_string(chrlit);
+        return "Exp : " + TypeName[type] + ",val :" + to_string(chrlit);
     if(type == STRLIT)
-        return "Exp: " + TypeName[type] + ",val:" + strlit;
-    return "Exp: " + TypeName[type];
+        return "Exp : " + TypeName[type] + ",val :" + strlit;
+    return "Exp : " + TypeName[type];
 }
 
 void Exp::print()
@@ -563,7 +627,7 @@ Str::Str()
 
 string Str::toString()
 {
-    return "Str: " + str;
+    return "Str : " + str;
 }
 
 void Str::print()
@@ -585,7 +649,7 @@ Chr::Chr()
 
 string Chr::toString()
 {
-    return "Chr: " + ch;
+    return "Chr : " + ch;
 }
 
 void Chr::print()
@@ -607,7 +671,7 @@ Num::Num()
 
 string Num::toString()
 {
-    return "Num: " + to_string(value);
+    return "Num : " + to_string(value);
 }
 
 void Num::print()
@@ -630,9 +694,9 @@ Bool::Bool()
 string Bool::toString()
 {
     if (boollit)
-        return "Bool: true";
+        return "Bool : true";
     else
-        return "Bool: false";
+        return "Bool : false";
 }
 
 void Bool::print()
@@ -676,7 +740,7 @@ Sid::Sid()
 
 string Sid::toString()
 {
-    return "Sid: " + name;
+    return "Sid : " + name;
 }
 
 void Sid::print()
@@ -698,7 +762,7 @@ Fid::Fid()
 
 string Fid::toString()
 {
-    return "Fid: " + name;
+    return "Fid : " + name;
 }
 
 void Fid::print()
@@ -720,7 +784,7 @@ Aid::Aid()
 
 string Aid::toString()
 {
-    return "Aid: " + name;
+    return "Aid : " + name;
 }
 
 void Aid::print()

@@ -1,7 +1,26 @@
 #pragma once
 
 #include "common.h"
-#include "token.h"
+
+class Node;
+class Asnop;
+class Str;
+class Chr;
+class Num;
+class Bool;
+class Vid;
+class Sid;
+class Fid;
+class Aid;
+class Tp;
+class Exp;
+class Decl;
+class Lv;
+class Simple;
+class Stmt;
+class Gdecl;
+class Gdefn;
+class Prog;
 
 class Node
 {
@@ -14,6 +33,7 @@ public:
     virtual string get_nodetype();
     virtual void set_parent(Node* par);
 };
+
 /*
 class Unop : public Node
 {
@@ -214,10 +234,12 @@ public:
     static string TypeName[];
     TpType type;
 
-    Tp *tp;
+    //Tp *tp;
     Tp *tp_tail;
     Sid *sid;
     Aid *aid;
+    int size; // 数组大小
+    //int base_size;
 
     Tp(TpType type);
     Tp();
@@ -225,6 +247,9 @@ public:
     virtual string toString();
     virtual void print();
     virtual string get_nodetype();
+    //static bool tp_equal(Tp* a, Tp* b);
+    //int get_base_size(); //返回基本大小
+    //int get_size();
 };
 
 
@@ -264,8 +289,7 @@ public:
         NUMLIT,
         STRLIT,
         CHRLIT,
-        TRUELIT,
-        FALSELIT,
+        BOOLLIT,
         NULLLIT,
         VID,
         BINOP,
@@ -459,6 +483,7 @@ public:
 
     Sid *sid;
     vector<Tp *> tp_list;
+    vector<string> name_list;
     vector<Fid *> fid_list;
     Paralist* pl;
 
@@ -478,8 +503,9 @@ class Prog : public Node
 {
     const string nodetype = "Prog";
 public:
-    vector<Gdefn*> gdefn_list;
+    vector<Node*> gdecl_gdefn_list;
     vector<Gdecl*> gdecl_list;
+    vector<Gdefn*> gdefn_list;
 
     Prog();
     virtual string toString();

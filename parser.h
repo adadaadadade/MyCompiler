@@ -3,7 +3,6 @@
 #include "common.h"
 #include "lexer.h"
 #include "ast.h"
-#include "token.h"
 
 class Parser
 {
@@ -109,6 +108,7 @@ class Parser
 public:
 
     Prog* makeAST();
+    Prog* sema_analysis();
 
     Parser(Lexer &lexer, Symtab &symtab);
     ~Parser();

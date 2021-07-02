@@ -1,6 +1,16 @@
-
-
-int test(char a, int b)
+struct my
 {
-   a &= b ? 1 : 1 < a == b << 1 | b & a ^ b && a || b + (a*2 + b*1) ;
+   int meta;
+};
+
+typedef struct my n;
+
+int func()
+{
+   int[100][100] arr = 1;
+   int a;
+}
+int a(int[] c)
+{
+
 }

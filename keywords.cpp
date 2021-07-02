@@ -1,5 +1,7 @@
 #include "keywords.h"
-#include "token.h"
+
+extern const string tokenName[];
+
 map<string,TokenType> namemap;
 
 KeyWords::KeyWords()

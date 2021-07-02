@@ -34,7 +34,7 @@ public:
 	char nextChar();//基于缓冲区的字符扫描算法,文件扫描接受后自动关闭文件
 	
 	//外部接口
-	char* getFile();//获取文件名
-	int getLine();//获取行号
-	int getCol();//获取列号
+	char* get_file();//获取文件名
+	int get_line();//获取行号
+	int get_col();//获取列号
 };

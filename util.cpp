@@ -28,7 +28,7 @@ void outputScanner(Scanner scanner){
     char ch;
     while((ch = scanner.nextChar()) != EOF)
     {
-        printf("<'%c',%d ,%d>", ch, scanner.getLine(), scanner.getCol());
+        printf("<'%c',%d ,%d>", ch, scanner.get_line(), scanner.get_col());
         printf("\n");
     }
     //KeyWords();

@@ -1,10 +1,11 @@
 CC=g++
-EXE=mycompiler
+EXE=mycc
 SRC=$(wildcard *.cpp)
 OBJ=$(SRC:.cpp=.o)
 CXXFLAGS=-g -Wno-deprecated	#传入参数DEBUG
 
-all:depend $(EXE) cleano
+all:depend $(EXE)
+	@rm *.o
 
 noclean:depend $(EXE)
 

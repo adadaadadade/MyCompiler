@@ -13,8 +13,8 @@ Scanner::Scanner(char* srcName)
     lineLen = 0;
     readPos = -1;
     lastch = 0;
-    lineNum = 0;
-    colNum = 0;
+    lineNum = 1;
+    colNum = 1;
 }
 
 
@@ -54,7 +54,7 @@ char Scanner::nextChar()//基于缓冲区的字符扫描算法,文件扫描接�
     if(lastch == '\n')
     {
         lineNum ++;
-        colNum = 0;
+        colNum = 1;
     }
     else if(ch != '\n')
         colNum ++;
@@ -68,19 +68,19 @@ char Scanner::nextChar()//基于缓冲区的字符扫描算法,文件扫描接�
 
 
 //外部接口
-char* Scanner::getFile()//获取文件名
+char* Scanner::get_file()//获取文件名
 {
     return fileName;
 }
 
 
-int Scanner::getLine()//获取行号
+int Scanner::get_line()//获取行号
 {
     return lineNum;
 }
 
 
-int Scanner::getCol()//获取列号
+int Scanner::get_col()//获取列号
 {
     return colNum;
 }
