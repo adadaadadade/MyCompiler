@@ -28,6 +28,7 @@ string Node::get_nodetype()
 
 Prog::Prog()
 {
+
 }
 
 string Prog::toString()
@@ -60,6 +61,10 @@ string Gdecl::TypeName[] = {
 
 Gdecl::Gdecl()
 {
+    vid = NULL;
+    tp = NULL;
+    pl = NULL;
+
 }
 
 string Gdecl::toString()
@@ -103,6 +108,11 @@ string Gdefn::TypeName[] = {
 
 Gdefn::Gdefn()
 {
+    sid = NULL;
+    tp = NULL;
+    vid = NULL;
+    body = NULL;
+    aid = NULL;
 }
 
 string Gdefn::toString()
@@ -213,6 +223,9 @@ string Body::get_nodetype()
 
 Decl::Decl()
 {
+    tp = NULL;
+    vid = NULL;
+    exp = NULL;
 }
 
 string Decl::toString()
@@ -252,6 +265,13 @@ string Stmt::TypeName[] = {
 
 Stmt::Stmt()
 {
+    simple1 = NULL;
+    simple2 = NULL;
+    exp1 = NULL;
+    exp2 = NULL;
+    stmt1 = NULL;
+    stmt2 = NULL;
+    body = NULL;
 }
 
 string Stmt::toString()
@@ -288,6 +308,9 @@ string Simple::TypeName[] = {
 
 Simple::Simple()
 {
+    lv = NULL;
+    asnop = NULL;
+    exp = NULL;
 }
 
 string Simple::toString()
@@ -322,6 +345,11 @@ string Lv::TypeName[] = {
 
 Lv::Lv()
 {
+    vid = NULL;
+    lv = NULL;
+    lv_tail = NULL;
+    fid = NULL;
+    exp = NULL;
 }
 
 string Lv::toString()
@@ -360,6 +388,10 @@ string Tp::TypeName[] = {
 
 Tp::Tp()
 {
+    tp_tail = NULL;
+    sid = NULL;
+    aid = NULL;
+    size = 0;
 }
 
 Tp::Tp(TpType type):type(type)
@@ -367,13 +399,13 @@ Tp::Tp(TpType type):type(type)
     switch (type)
     {
     case Tp::INT:
-        size = 4;
+        //size = 4;
         break;
     case Tp::CHAR:
-        size = 2;
+        //size = 2;
         break;
     case Tp::BOOL:
-        size = 2;
+        //size = 2;
         break;
     case Tp::STRING:
         
@@ -387,6 +419,36 @@ Tp::Tp(TpType type):type(type)
     default:
         break;
     }
+}
+
+Tp::Tp(Tp* tp)
+{
+    if(tp->sid != NULL)
+    {
+        sid = new Sid();
+        sid->name = tp->sid->name;
+    }
+    if(tp->aid != NULL)
+    {
+        aid = new Aid();
+        aid->name = tp->sid->name;
+    }
+    if(tp->tp_tail != NULL)
+    {
+        tp_tail = new Tp(tp->tp_tail);
+        tp_tail->set_parent(this);
+    }
+    type = tp->type;
+    size = tp->size;
+}
+
+void Tp::add_tail(Tp *tp)
+{
+    Tp *i = this;
+    while (i->tp_tail != NULL)
+        i = i->tp_tail;
+    i->tp_tail = tp;
+    tp->set_parent(i);
 }
 
 string Tp::toString()
@@ -406,6 +468,7 @@ void Tp::print()
     P(sid);
     P(aid);
     P(tp_tail);
+    //printf("%p", tp_tail);
 
 }
 
@@ -475,6 +538,15 @@ string Exp::TypeName[] = {
 
 Exp::Exp()
 {
+    exp1 = NULL;
+    exp2 = NULL;
+    exp3 = NULL;
+    exp_tail = NULL;
+    vid = NULL;
+    fid = NULL;
+    tp = NULL;
+    is_array_index = false;
+    is_func_arg = false;
 }
 
 Exp* Exp::binop_exp(Exp* lval,TokenType tag, Exp* rval)
@@ -492,7 +564,7 @@ Exp* Exp::unop_exp(TokenType tag, Exp* e)
 {
     Exp* result = new Exp();
     result->type = UNOP;
-    result->exp1 = e; result->exp1->set_parent(e);
+    result->exp1 = e; result->exp1->set_parent(result);
     result->tag = tag;
 
     return result;
@@ -500,15 +572,23 @@ Exp* Exp::unop_exp(TokenType tag, Exp* e)
 
 string Exp::toString()
 {
+    string str = "Exp : ";
+    if(is_array_index)
+        str = "Array Index Exp : ";
+    if(is_func_arg)
+        str = "Func Arg Exp : ";
     if(type == BINOP)
-        return "Exp : " + TypeName[type] + ",val :" + tokenName[tag];
+        return str + TypeName[type] + ",val :" + tokenName[tag];
+     if(type == UNOP)
+        return str + TypeName[type] + ",val :" + tokenName[tag];
     if(type == NUMLIT)
-        return "Exp : " + TypeName[type] + ",val :" + to_string(numlit);
+        return str + TypeName[type] + ",val :" + to_string(numlit);
     if(type == CHRLIT)
-        return "Exp : " + TypeName[type] + ",val :" + to_string(chrlit);
+        return str + TypeName[type] + ",val :" + to_string(chrlit);
     if(type == STRLIT)
-        return "Exp : " + TypeName[type] + ",val :" + strlit;
-    return "Exp : " + TypeName[type];
+        return str + TypeName[type] + ",val :" + strlit;
+    
+    return str + TypeName[type];
 }
 
 void Exp::print()

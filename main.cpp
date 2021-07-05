@@ -4,6 +4,7 @@
 #include "scanner.h"
 #include "lexer.h"
 #include "parser.h"
+#include "symbol.h"
 #include "symtab.h"
 #include "keywords.h"
 #include "util.h"
@@ -25,11 +26,19 @@ int main(int argc, char *argv[])
     Symtab::set_symtab(&symtab);
     Parser parser(lexer, symtab);
     Prog* ast = parser.makeAST();
+    InterCode global_ir;
+    GenIR genir(global_ir, *ast, symtab);
+    
     if (Error::get_error_num() == 0)
-        ast = parser.sema_analysis();
-    InterCode ir;
-    if (Error::get_error_num() == 0)
-        GenIR genir(ir, *ast, symtab);
-
+        genir.gen_ir();
+    
+    if(Args::show_symtab == true)
+    {
+        symtab.print();
+    }
+    if(Args::show_ir == true)
+    {
+        symtab.print_ir();
+    }
     //outputTokens(lexer);
 }

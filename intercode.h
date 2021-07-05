@@ -13,15 +13,19 @@ enum IROP
 	//函数入口和出口
 	IROP_ENTRY,IROP_EXIT,
 	//赋值运算
-	IROP_AS,//赋值 eg: AS result,arg1 => result=arg1
+	IROP_ASN,//赋值 eg: AS result,arg1 => result=arg1
 	//算数运算
 	IROP_ADD,IROP_SUB,IROP_MUL,IROP_DIV,IROP_MOD,//加减乘除模 eg: ADD result,arg1,arg2 => result=arg1 + arg2
 	IROP_NEG,//负 eg: NEG result,arg1 => result = -arg1
 	//比较运算
-	IROP_GT,IROP_GE,IROP_LT,IROP_LE,IROP_EQU,IROP_NE,//大小等 eg: GT result,arg1,arg2 => result=arg1 > arg2
+	IROP_GTH,IROP_GEQ,IROP_LTH,IROP_LEQ,IROP_EQU,IROP_NEQ,//大小等 eg: GT result,arg1,arg2 => result=arg1 > arg2
 	//逻辑运算
 	IROP_NOT,//非 eg: NOT result,arg1 => result=!arg1
-	IROP_AND,IROP_OR,//与或 eg: AND result,arg1,arg2 => result=arg1 && arg2
+	IROP_LAND,IROP_LOR,//与或 eg: AND result,arg1,arg2 => result=arg1 && arg2
+    //位运算
+    IROP_LMO, IROP_RMO,
+    IROP_BAND, IROP_BOR, IROP_BXOR,
+    IROP_BNEG,
 	//数组运算
 	//IROP_INDL,//索引作为左值 eg: INDL result,arg1,arg2 => arg1[arg2]=result
 	//IROP_INDR,//索引作为右值 eg: INDR result,arg1,arg2 => result=arg1[arg2]
@@ -41,6 +45,11 @@ enum IROP
 	IROP_RET,//直接返回 eg: RET => return
 	IROP_RETV//带数据返回 eg:RET arg1 => return arg1
 };
+/*
+IROP_LMO, IROP_RMO,
+IROP_BAND, IROP_BOR, IROP_BXOR,
+IROP_BNEG,
+*/
 
 /*
 	四元式类，定义了中间代码的指令的形式
@@ -60,7 +69,7 @@ private:
     //};
     Var *arg2; //参数2
 
-    bool first;  //是否是首指令
+    //bool first;  //是否是首指令
     void init(); //初始化
 
 public:
@@ -74,14 +83,22 @@ public:
     //int offset;//参数的栈帧偏移
 
     //构造
-    InterInst(IROP op, Var *rs, Var *arg1, Var *arg2 = NULL);                  //一般运算指令
-    InterInst(IROP op, Func *func, Var *rs = NULL);                              //函数调用指令,ENTRY,EXIT
-    InterInst(IROP op, Var *arg1 = NULL);                                      //参数进栈指令,NOP
-    InterInst(string label);                                                                   //产生唯一标号
-    InterInst(IROP op, InterInst *tar, Var *arg1 = NULL, Var *arg2 = NULL);    //条件跳转指令,return
-    void replace(IROP op, Var *rs, Var *arg1, Var *arg2 = NULL);               //替换表达式指令信息，用于常量表达式处理
-    void replace(IROP op, InterInst *tar, Var *arg1 = NULL, Var *arg2 = NULL); //替换跳转指令信息，条件跳转优化
-    ~InterInst();                                                                  //清理常量内存
+    //一般运算指令
+    InterInst(IROP op, Var *rs, Var *arg1, Var *arg2 = NULL);
+    //函数调用指令,ENTRY,EXIT             
+    InterInst(IROP op, Func *func, Var *rs = NULL);
+    //参数进栈指令,NOP                            
+    InterInst(IROP op, Var *arg1 = NULL);
+    //产生唯一标号                                  
+    InterInst(string label);
+    //条件跳转指令,return
+    InterInst(IROP op, InterInst *tar, Var *arg1 = NULL, Var *arg2 = NULL);
+    //替换表达式指令信息，用于常量表达式处理
+    void replace(IROP op, Var *rs, Var *arg1, Var *arg2 = NULL);
+    //替换跳转指令信息，条件跳转优化
+    void replace(IROP op, InterInst *tar, Var *arg1 = NULL, Var *arg2 = NULL); 
+    //清理常量内存
+    ~InterInst();
 
     //外部调用接口
     void setFirst(); //标记首指令

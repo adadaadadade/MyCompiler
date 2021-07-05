@@ -14,14 +14,19 @@
 #define ISAID F(ID) && (HASAID)
 #define ISSID F(ID) && (HASSID)
 
-#define FUNOP F(NOT)_(BNEG)_(SUB)_(MUL)_(INC)_(DEC)
-#define FBINOP F(ADD)_(SUB)_(MUL)_(DIV)_(MOD)_(LMO)_(RMO)_(LTH)_(GTH)_(EQU)_(NEQ)_(BAND)_(BXOR)_(BOR)_(LAND)_(LOR)
-#define FTP  F(KW_INT)_(KW_BOOL)_(KW_STRING)_(KW_CHAR)_(KW_STRUCT) || (ISAID)
-#define FEXP (FUNOP)_(LPAREN)_(NUMLIT)_(STRLIT)_(KW_TRUE)_(KW_FALSE)_(KW_NULL)_(KW_ALLOC)_(KW_ALLOC_ARRAY)_(MUL)_(ID)
-#define FSIMPLE (FEXP)_(ID)_(MUL)
-#define FSTMT (FSIMPLE)_(KW_IF)_(KW_WHILE)_(KW_FOR)_(KW_CONTINUE)_(KW_BREAK)_(KW_RETURN)_(LBRACE)_(KW_ASSERT)_(SEMICON)
-#define FLVTAIL F(DOT)_(ARROW)_(LBRACK)
-#define FASNOP F(ASN)_(ASNADD)_(ASNSUB)_(ASNMUL)_(ASNDIV)_(ASNLMO)_(ASNRMO)_(ASNAND)_(ASNXOR)_(ASNOR)
+#define FUNOP F(NOT) \
+_(BNEG) _(SUB) _(MUL) _(INC) _(DEC)
+#define FBINOP F(ADD) \
+_(SUB) _(MUL) _(DIV) _(MOD) _(LMO) _(RMO) _(LTH) _(GTH) _(EQU) _(NEQ) _(BAND) _(BXOR) _(BOR) _(LAND) _(LOR)
+#define FTP F(KW_INT) \
+                _(KW_BOOL) _(KW_STRING) _(KW_CHAR) _(KW_STRUCT) || (ISAID)
+#define FEXP (FUNOP) _(LPAREN) _(NUMLIT) _(STRLIT) _(KW_TRUE) _(KW_FALSE) _(KW_NULL) _(KW_ALLOC) _(KW_ALLOC_ARRAY) _(MUL) _(ID)
+#define FSIMPLE (FEXP) _(ID) _(MUL)
+#define FSTMT (FSIMPLE) _(KW_IF) _(KW_WHILE) _(KW_FOR) _(KW_CONTINUE) _(KW_BREAK) _(KW_RETURN) _(LBRACE) _(KW_ASSERT) _(SEMICON)
+#define FLVTAIL F(DOT) \
+_(ARROW) _(LBRACK)
+#define FASNOP F(ASN) \
+_(ASNADD) _(ASNSUB) _(ASNMUL) _(ASNDIV) _(ASNLMO) _(ASNRMO) _(ASNAND) _(ASNXOR) _(ASNOR)
 
 Parser::Parser(Lexer &lexer, Symtab &symtab) : lexer(lexer), symtab(symtab)
 {
@@ -149,14 +154,37 @@ void Parser::struct_decl_ordefn_orfn(Prog *p, Sid *sid)
         if (!match(SEMICON))
             Error::syn_error(Error::SEMICON_LOST, look);
 
-        Struct *v = new Struct(sid->name, gdefn->tp_list, gdefn->name_list);
+        vector<Tp *> *list_temp = new vector<Tp *>;
+        for (int i = 0; i < gdefn->tp_list.size(); i++)
+        {
+            if (gdefn->tp_list[i]->type == Tp::AID)
+            {
+                Typedef *td;
+                if (td = symtab.get_typedef(gdefn->tp_list[i]->aid->name))
+                {
+                    Tp *temp = new Tp(td->get_tp());
+                    if (gdefn->tp_list[i]->tp_tail != NULL)
+                        temp->add_tail(gdefn->tp_list[i]->tp_tail);
+                    list_temp->push_back(temp);
+                }
+                else
+                {
+                    Error::sem_error(Error::TYPEDEF_UN_DEF);
+                }
+            }
+            else
+            {
+                list_temp->push_back(gdefn->tp_list[i]);
+            }
+        }
+        Struct *v = new Struct(sid->name, *list_temp, gdefn->name_list);
         symtab.add_struct(v);
 
         p->gdecl_gdefn_list.push_back(gdefn);
         p->gdefn_list.push_back(gdefn);
         gdefn->set_parent(p);
     }
-    else if (F(MUL)_(LBRACK)_(ID))
+    else if (F(MUL) _(LBRACK) _(ID))
     {
         Tp *t = new Tp();
         t->type = t->STRUCT;
@@ -477,7 +505,7 @@ Stmt *Parser::stmt()
 Simple *Parser::simple()
 {
     Simple *si = new Simple();
-    if (F(ID)_(MUL))
+    if (F(ID) _(MUL))
     {
         si->lv = lv();
         si->lv->set_parent(si);
@@ -623,7 +651,7 @@ void Parser::tp_tail(Tp *tp)
 {
     Tp *i;
     i = tp;
-    while (F(MUL)_(LBRACK))
+    while (F(MUL) _(LBRACK))
     {
         Tp *temp = new Tp();
         i->tp_tail = temp;
@@ -637,17 +665,17 @@ void Parser::tp_tail(Tp *tp)
         else if (match(LBRACK))
         {
             i->type = i->ARRAY;
-            
-            if(F(NUMLIT))
+
+            if (F(NUMLIT))
             {
-                i->size = ((Numlit*)look)->val;
+                i->size = ((Numlit *)look)->val;
                 match(NUMLIT);
             }
             else
             {
                 Error::syn_error(Error::NUM_LOST, look);
             }
-            
+
             if (!match(RBRACK))
                 Error::syn_error(Error::RBRACK_LOST, look);
         }
@@ -844,16 +872,16 @@ Exp *Parser::cmptail(Exp *lval)
         Exp *result = Exp::binop_exp(lval, GTH, rval);
         return cmptail(result);
     }
-    else if (match(LET))
+    else if (match(LEQ))
     {
         Exp *rval = shiftexpr();
-        Exp *result = Exp::binop_exp(lval, LET, rval);
+        Exp *result = Exp::binop_exp(lval, LEQ, rval);
         return cmptail(result);
     }
-    else if (match(GET))
+    else if (match(GEQ))
     {
         Exp *rval = shiftexpr();
-        Exp *result = Exp::binop_exp(lval, GET, rval);
+        Exp *result = Exp::binop_exp(lval, GEQ, rval);
         return cmptail(result);
     }
     return lval;
@@ -996,9 +1024,9 @@ Exp *Parser::elem()
         e->vid = vid();
         e->vid->set_parent(e);
         idexpr(e);
-        return (e);
+        return e;
     }
-    else if (F(KW_ALLOC)_(KW_ALLOC_ARRAY))
+    else if (F(KW_ALLOC) _(KW_ALLOC_ARRAY))
     {
         return allocs();
     }
@@ -1014,38 +1042,38 @@ Exp *Parser::idexpr(Exp *e)
     if (match(LBRACK))
     {
         exp = expr();
-        e->exp1 = exp;
-        e->exp1->set_parent(e);
-        exp->type = Exp::ARRAY;
+        e->exp_tail = exp;
+        e->exp_tail->set_parent(e);
+        exp->is_array_index = true;
         if (!match(RBRACK))
             Error::syn_error(Error::RBRACK_LOST, look);
         return idexpr(exp);
     }
     else if (match(LPAREN))
     {
-        exp = expr();
-        e->exp1 = exp;
-        e->exp1->set_parent(e);
-        exp->type = Exp::FUNC;
+        e->type = Exp::FUNC;
+        e->exp_tail = realarg(e);
+        if (e->exp_tail)
+            e->exp_tail->set_parent(e);
         if (!match(RPAREN))
             Error::syn_error(Error::RPAREN_LOST, look);
-        return idexpr(exp);
+        return e;
     }
     else if (match(DOT))
     {
         exp->fid = fid();
-        exp->fid->set_parent(e);
-        e->exp1 = exp;
-        e->exp1->set_parent(e);
+        exp->fid->set_parent(exp);
+        e->exp_tail = exp;
+        e->exp_tail->set_parent(e);
         exp->type = Exp::DOTFID;
         return idexpr(exp);
     }
     else if (match(ARROW))
     {
         exp->fid = fid();
-        exp->fid->set_parent(e);
-        e->exp1 = exp;
-        e->exp1->set_parent(e);
+        exp->fid->set_parent(exp);
+        e->exp_tail = exp;
+        e->exp_tail->set_parent(e);
         exp->type = Exp::TOFID;
         return idexpr(exp);
     }
@@ -1057,9 +1085,11 @@ Exp *Parser::realarg(Exp *e)
     if (FEXP)
     {
         Exp *a = arg();
-        return arglist(a);
+        a->is_func_arg = true;
+        arglist(a);
+        return a;
     }
-    return e;
+    return NULL;
 }
 
 Exp *Parser::arg()
@@ -1067,17 +1097,17 @@ Exp *Parser::arg()
     return expr();
 }
 
-Exp *Parser::arglist(Exp *e)
+Exp *Parser::arglist(Exp *last)
 {
     if (match(COMMA))
     {
         Exp *next = arg();
-        Exp *list = new Exp();
-        list->exp_tail = next;
-        list->exp_tail->set_parent(list);
-        return arglist(list);
+        next->is_func_arg = true;
+        last->exp_tail = next;
+        last->exp_tail->set_parent(last);
+        return arglist(next);
     }
-    return e;
+    return last;
 }
 
 Exp *Parser::allocs()
@@ -1344,23 +1374,4 @@ Asnop *Parser::asnop()
         break;
     }
     return op;
-}
-
-Prog* Parser::sema_analysis()
-{
-    /*
-    for(int i = 0; i < AST->gdecl_gdefn_list.size(); i ++)
-    {
-        Node* node = AST->gdecl_gdefn_list[i];
-        if(node->get_nodetype().compare("Gdecl"))
-        {
-
-        }
-        else if(1)
-        {
-            ;
-        }
-    }
-    */
-    return AST;
 }

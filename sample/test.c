@@ -1,16 +1,18 @@
 struct my
 {
-   int meta;
+   int[10] meta;
 };
 
-typedef struct my n;
-
-int func()
+int func(int a, int b)
 {
-   int[100][100] arr = 1;
+   return 1;
+}
+
+int main()
+{
    int a;
-}
-int a(int[] c)
-{
+   int[10][10][10] arr;
+   a = arr[1][0][1];
 
 }
+

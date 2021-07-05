@@ -1,9 +1,21 @@
 #include "intercode.h"
 #include "symbol.h"
-#define GETSTR(x) ((x != NULL) ? (x->get_str() + "\t") : "-\t")
+#define GETSTR(x) ((x != NULL) ? (x->to_string() + "\t") : "-\t")
+
+void InterInst::init()
+{
+    label = "";
+    op = IROP_NOP;
+    result = NULL;
+    target = NULL;
+    arg1 = NULL;
+    arg2 = NULL;
+    func = NULL;
+}
 
 InterInst::InterInst(IROP op, Var *rs, Var *arg1, Var *arg2)                  //一般运算指令
 {
+    init();
     this->op = op;
     this->result = rs;
     this->arg1 = arg1;
@@ -12,6 +24,7 @@ InterInst::InterInst(IROP op, Var *rs, Var *arg1, Var *arg2)                  //
 
 InterInst::InterInst(IROP op, Func *fun, Var *rs)                              //函数调用指令,ENTRY,EXIT
 {
+    init();
     this->op = op;
     this->func = fun;
     this->result = rs;
@@ -20,6 +33,7 @@ InterInst::InterInst(IROP op, Func *fun, Var *rs)                              /
 
 InterInst::InterInst(IROP op, Var *arg1)                                      //参数进栈指令,NOP
 {
+    init();
     this->op = op;
     this->arg1 = arg1;
 }
@@ -27,12 +41,14 @@ InterInst::InterInst(IROP op, Var *arg1)                                      //
 
 InterInst::InterInst(string label)                                                                   //产生唯一标号
 {
+    init();
     this->label = label;
 }
 
 
 InterInst::InterInst(IROP op, InterInst *tar, Var *arg1, Var *arg2)    //条件跳转指令,return
 {
+    init();
     this->op = op;
     this->target = tar;
     this->arg1 = arg1;
@@ -42,6 +58,7 @@ InterInst::InterInst(IROP op, InterInst *tar, Var *arg1, Var *arg2)    //条件�
 
 void InterInst::replace(IROP op, Var *rs, Var *arg1, Var *arg2)               //替换表达式指令信息，用于常量表达式处理
 {
+    init();
     this->op = op;
     this->result = rs;
     this->arg1 = arg1;
@@ -51,6 +68,7 @@ void InterInst::replace(IROP op, Var *rs, Var *arg1, Var *arg2)               //
 
 void InterInst::replace(IROP op, InterInst *tar, Var *arg1, Var *arg2) //替换跳转指令信息，条件跳转优化
 {
+    init();
     this->op = op;
     this->target = tar;
     this->arg1 = arg1;
@@ -93,7 +111,7 @@ bool InterInst::is_lb()
 */
 bool InterInst::is_expr()
 {
-	return (op>=IROP_AS&&op<=IROP_OR||op==IROP_GET);//&&result->isBase();
+	return (op>=IROP_ASN&&op<=IROP_LOR||op==IROP_GET);//&&result->isBase();
 }
 
 /*
@@ -115,6 +133,7 @@ void InterInst::callToProc() //替换操作符，用于将CALL转化为PROC
 
 InterInst *InterInst::getTarget() //获取跳转指令的目标指令
 {
+    return target;
 }
 
 Var *InterInst::get_result() //获取返回值
@@ -152,97 +171,97 @@ string InterInst::to_string() //输出指令
     string str;
     if (label != "")
     {
-        str = label;
+        str = label + ":";
         return str;
     }
     switch (op)
     {
     //case IROP_NOP:printf("nop");break;
     case IROP_DEC:
-        str = "DEC\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tDEC\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
         break;
     case IROP_ENTRY:
-        str = "ENTRY\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tENTRY\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_EXIT:
-        str = "EXIT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tEXIT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_AS:
-        str = "AS\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_ASN:
+        str = "\tAS\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_ADD:
-        str = "ADD\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tADD\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_SUB:
-        str = "SUB\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tSUB\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_MUL:
-        str = "MUL\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tMUL\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_DIV:
-        str = "DIV\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tDIV\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_MOD:
-        str = "MOD\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tMOD\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_NEG:
-        str = "NEG\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_BNEG:
+        str = "\tNEG\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_GT:
-        str = "GT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_GTH:
+        str = "\tGTH\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_GE:
-        str = "GE\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_GEQ:
+        str = "\tGEQ\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_LT:
-        str = "LT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_LTH:
+        str = "\tLTH\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_LE:
-        str = "LE\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_LEQ:
+        str = "\tLEQ\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_EQU:
-        str = "EQU\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tEQU\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_NE:
-        str = "NE\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_NEQ:
+        str = "\tNE\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_NOT:
-        str = "NOT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tNOT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_AND:
-        str = "AND\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_LAND:
+        str = "\tAND\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    case IROP_OR:
-        str = "OR\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+    case IROP_LOR:
+        str = "\tOR\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_JMP:
-        str = "JMP\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tJMP\t" + target->label + "\t" + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_JT:
-        str = "JT\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tJT\t" + target->label + "\t" + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_JF:
-        str = "JF\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tJF\t" + target->label + "\t" + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     // case IROP_JG:printf("if( ");arg1->value();printf(" > ");arg2->value();printf(" )goto %s",
@@ -256,39 +275,39 @@ string InterInst::to_string() //输出指令
     // case IROP_JE:printf("if( ");arg1->value();printf(" == ");arg2->value();printf(" )goto %s",
     // 	target->label.c_str());break;
     case IROP_JNE:
-        str = "JNE\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tJNE\t" + target->label + "\t" + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_ARG:
-        str = "ARG\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tARG\t" + GETSTR(result) + GETSTR(arg1) + "\t" + GETSTR(arg2);
 
         break;
     case IROP_PROC:
-        str = "PROC\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tPROC\t" + GETSTR(result) + func->get_name() + "\t" + GETSTR(arg2);
 
         break;
     case IROP_CALL:
-        str = "CALL\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tCALL\t" + GETSTR(result) + func->get_name() + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_RET:
-        str = "RET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tRET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_RETV:
-        str = "RETV\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tRETV\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_LEA:
-        str = "LEA\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tLEA\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_SET:
-        str = "SET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tSET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     case IROP_GET:
-        str = "GET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
+        str = "\tGET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
 
         break;
     }

@@ -16,7 +16,7 @@ enum TokenType
 	NOT, BNEG, INC, DEC,	// ! ~ 
 	ADD, SUB, MUL, DIV, MOD,	// | + | - | * | / | % 
 	LMO, RMO,				// | << | >>
-	LTH, GTH, LET, GET, 				// | < | > | <= | >=
+	LTH, GTH, LEQ, GEQ, 				// | < | > | <= | >=
 	EQU, NEQ,						// | == | != 
 	BAND, BXOR, BOR , LAND, LOR,						// | & | ^ | | | && | ||		
 	ASN, ASNADD, ASNSUB, ASNMUL, ASNDIV, ASNMOD, ASNLMO, ASNRMO, ASNAND, ASNXOR, ASNOR,//  = | += | -= | *= | /= | %= | <<= | >>=| &= | ^= | |=

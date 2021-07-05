@@ -34,61 +34,6 @@ public:
     virtual void set_parent(Node* par);
 };
 
-/*
-class Unop : public Node
-{
-    const string nodetype = "Unop";
-public:
-    enum UnopType
-    {
-        NOT,
-        BNEG,
-        SUB,
-        MUL,
-        INC,
-        DEC
-    };
-    static string TypeName[];
-    UnopType type;
-
-    Unop();
-    virtual string toString();
-    virtual void print();
-    virtual string get_nodetype();
-};
-
-class Binop : public Node
-{
-    const string nodetype = "Binop";
-public:
-    enum BinopType
-    {
-        ADD,
-        SUB,
-        MUL,
-        DIV,
-        MOD,
-        LMO,
-        RMO,
-        LTH,
-        GTH,
-        EQU,
-        NEQ,
-        AND,
-        XOR,
-        OR,
-        LAND,
-        LOR
-    };
-    static string TypeName[];
-    BinopType type;
-
-    Binop();
-    virtual string toString();
-    virtual void print();
-    virtual string get_nodetype();
-};
-*/
 class Asnop : public Node
 {
     const string nodetype = "Asnop";
@@ -103,6 +48,7 @@ public:
         ASNMOD,
         ASNLMO,
         ASNRMO,
+        //位运算
         ASNAND,
         ASNXOR,
         ASNOR
@@ -242,7 +188,11 @@ public:
     //int base_size;
 
     Tp(TpType type);
+    //复制一个tp
+    Tp(Tp *tp);
     Tp();
+
+    void add_tail(Tp *tail);
     
     virtual string toString();
     virtual void print();
@@ -299,7 +249,7 @@ public:
         DOTFID,
         TOFID,
         ARRAY,
-        POINTER,
+        //POINTER,
         ALLOC,
         ALLOCARRAY
     };
@@ -316,6 +266,9 @@ public:
     char chrlit;
     string strlit;
     bool boollit;
+
+    bool is_array_index;
+    bool is_func_arg;
 
     Vid *vid;
 
@@ -350,7 +303,7 @@ class Body : public Node
     const string nodetype = "Body";
 public:
     vector<Decl *> decl_list;
-    vector<Node *> stmt_list;
+    vector<Stmt *> stmt_list;
 
     Body();
     virtual string toString();

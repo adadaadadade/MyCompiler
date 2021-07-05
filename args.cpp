@@ -16,6 +16,8 @@ bool Args::show_help = false;
 bool Args::show_char = false;
 bool Args::show_token = false;
 bool Args::show_ast = false;
+bool Args::show_symtab = false;
+bool Args::show_ir = false;
 
 Args::Args()
 {
@@ -41,6 +43,10 @@ void Args::get_args(int argc, char *argv[])
                 Args::show_token=true;
             if(!strcmp(argv[i],"-a") || !strcmp(argv[i],"--showast"))
                 Args::show_ast=true;
+            if(!strcmp(argv[i],"-s") || !strcmp(argv[i],"--showsymtab"))
+                Args::show_symtab = true;
+            if(!strcmp(argv[i],"-i") || !strcmp(argv[i],"--showir"))
+                Args::show_ir = true;
             if(!strcmp(argv[i],"-o"))
                 Args::next_outputfile_name = true;
         }
@@ -61,6 +67,8 @@ void Args::get_args(int argc, char *argv[])
                 "-c --showchar\tshow char\n"
                 "-t --showtoken\tshow token\n"
                 "-a --showast\tshow ast\n"
+                "-s --showsymtab\t show symtab\n"
+                "-i --showir\t show ir\n"
                 "-h --help\tshow help\n"
         ;
     }

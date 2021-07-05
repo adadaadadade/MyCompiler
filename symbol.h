@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "ast.h"
+#include "intercode.h"
 #include <ext/hash_map>
 
 using namespace __gnu_cxx;
@@ -24,8 +25,8 @@ class Struct
     string name;
     //vector<Tp*> &tp_list;
     //vector<string> &name_list;
-    vector<Var*> var_list;
-    hash_map<string, int, string_hash> offset_list;
+    hash_map<string, Var*, string_hash> var_tab;
+    hash_map<string, int, string_hash> offset_tab;
     int size;
 
 public:
@@ -34,8 +35,10 @@ public:
 
     string get_name();
     void set_name(string name);
+    Var *get_var(string fname);
     int get_size();
     int get_offset(string fname);
+    void print();
 };
 
 class Typedef
@@ -49,44 +52,57 @@ public:
 
     string get_name();
     void set_name(string name);
+    Tp* get_tp();
+    void print();
 };
 
 class Var
 {
+public:
     enum BaseType
     {
         INT,
         CHAR,
         BOOL,
         STRUCT,
-        STRING
+        STRING,
+        POINTER
     };
+private:
     const static int int_size = 4;
     const static int char_size = 2;
     const static int bool_size = 2;
     const static int pointer_size = 8;  //64位
-    const static int string_size = 8; //char*
+    const static int string_size = 8; //
 
     Tp *tp;            // 变量类型
-    BaseType base_type;
+    Var::BaseType base_type;
     
     Scope *scope; // 作用域路径
     string name;         // 变量类型
-    int base_size = -1;    //基本类型大小 单位字节
+
+    int base_size;    //基本类型大小 单位字节 单位大小或单位结构体大小
+    // 
+    int size; //分配空间大小 单位字节
     
-    int size = -1; //分配空间大小 单位字节
-
-    bool is_pointer = false;
-    int pointer_deep = 0;
-
-    bool is_array = false;
-    int array_deep = 0;
-    vector<int> array_size;
-
-    bool is_struct = false;
+    //几维数组
+    int array_dim;
+    // -1 为一位指针， 正数为数组 定义信息
+    vector<int> a_p_tail;
+    //对应scope
+    int s_offset;
+    //对于func
+    int f_offset;
+    bool is_struct;
     Struct* stru;
 
     bool is_literal;           // 是否字面量
+
+    bool is_temp;
+
+    bool is_offset_var;
+    bool left;
+
     union
     {
         int int_var;
@@ -96,27 +112,57 @@ class Var
     };
     //string ptrVal; //初始化字符指针常量字符串的名称
     Var *ptr;
+    
+    void init();
+    //通过basetype 设置basetype， basesize 和size
+    void set_from_basetype(BaseType type);
 public:
 
     Var();
     //tp 和 name 生成 Var；
-    Var(Tp* tp, string name); 
+    Var(Tp* tp, string name, bool is_temp = false); 
+    Var(Var::BaseType type, string structname = "", bool is_temp = false);
+    Var(Var::BaseType type, bool is_temp = false);
+    //生成字面量
+    Var(int int_var);
+    Var(char char_var);
+    Var(bool bool_var);
+    Var(string str_var);
+    //复制一个var
+    Var(Var *var, bool is_temp = false);
+
     ~Var(); 
 
     string get_name();
     void set_name(string name);
-    string get_str();
+    void set_s_offset(int offset);
+    int get_s_offset();
+    void set_left(bool left);
+    string to_string();
     int get_size();
-    int get_offset(vector<int> &array_index);
-    //static bool tp_equal(Var* a, Var* b);
+    int get_offset_lit(vector<int> &array_index);
+    int get_arr_offset(int index_cnt);
+    Var* get_basevar();
+    BaseType get_basetype();
+    Struct *get_struct();
+
+    void sub_pointer();
+
+    bool is_pointer();
+    bool is_array();
+    bool is_left();
+
+    static bool check_type(Var* lvar, Var* rvar);
+
+
 };
 
 class Scope
 {
     int scope_id;
     Scope *parent;
-    int size = -1;
-
+    int size;
+    
     //hash函数
 	struct string_hash{
 		size_t operator()(const string& str) const{
@@ -132,22 +178,47 @@ public:
     ~Scope();
     void add_var(Var* var);
     Var* get_var(string name);
+    void add_scope(Scope *scope);
     int get_size();
-};
+    Scope *get_parent();
+    void set_parent(Scope* parent);
 
+    void print();
+};
 
 class Func
 {
-    Tp* tp;
-    Scope* scope;
+    Var* ret;
     string name;
     int func_id;
-    vector<Var*>paraVar;
-    InterInst* LFB;
-    InterInst* LFE;
-    InterCode* ir;
+    Scope* scope;
+    vector<Var*> para_vars;
+
+    vector<int> scope_esp;
+    int max_depth;
+    int cur_esp;
+
+    InterCode intercode;
 
 public:
-    Func(/* args */);
+    InterInst* lfb;
+    InterInst* lfe;
+
+    Func(Var*ret, string name, int f_id, Scope *scope, vector<Var*>& para_vars);
     ~Func();
+
+    string get_name();
+    void set_name(string name);
+    void add_para_var(Var *para);
+
+    void enter_scope();
+    void leave_scope();
+    void add_inst(InterInst* inst);
+    Var* get_ret();
+
+    void print_scopes();
+    void print_ir();
+
+    void gen_asm(FILE *file);
+    
 };

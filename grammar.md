@@ -115,7 +115,7 @@
 
 <bxortail> ::= BXOR <bandexpr> <bxortail>
 
-<bandexpr> ::= <cmpexpr> <bandtail>
+<bandexpr> ::= <equexpr> <bandtail>
 
 <bandtail> ::= BAND <equexpr> <bandtail>
     |$
@@ -195,3 +195,64 @@
 <binop> ::= ADD | SUB | MUL | DIV | MOD |LMO | RMO | LTH | GTH | EQU | NEQ | AND | XOR | OR  | LAND | LOR
 	
 <asnop> ::= ASN | ASNADD | ASNSUB | ASNMUL | ASNDIV | ASNMOD | ASNLMO | ASNRMO | ASNAND | ASNXOR | ASNOR
+
+
+dec .L9
+.L9 = 0 * 4
+dec .L8
+.L8 = arr + .L9
+dec .L10
+*.L8 = 1
+dec .L12
+.L12 = 0 * 4
+dec .L11
+.L11 = arr + .L12
+dec .L13
+*.L11 = 2
+dec .L15
+.L15 = 1 * 4
+dec .L14
+.L14 = arr + .L15
+dec .L16
+*.L14 = 3
+return 0 goto .L5
+.L5:
+exit
+
+
+	mov r8,#0
+	mov r9,#4
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-44]
+	add r8,fp,#-32
+	ldr r9,[fp,#-44]
+	add r8,r8,r9
+	str r8,[fp,#-48]
+	mov r8,#1
+	ldr r9,[fp,#-48]
+	str r8,[r9]
+	mov r8,#0
+	mov r9,#4
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-56]
+	add r8,fp,#-32
+	ldr r9,[fp,#-56]
+	add r8,r8,r9
+	str r8,[fp,#-60]
+	mov r8,#2
+	ldr r9,[fp,#-60]
+	str r8,[r9]
+	mov r8,#1
+	mov r9,#4
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-68]
+	add r8,fp,#-32
+	ldr r9,[fp,#-68]
+	add r8,r8,r9
+	str r8,[fp,#-72]
+	mov r8,#3
+	ldr r9,[fp,#-72]
+	str r8,[r9]

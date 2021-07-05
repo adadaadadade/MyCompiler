@@ -68,10 +68,14 @@ public:
     */
     enum SemError
     {
-        STRUCT_UN_DEF,
+        TYPEDEF_RE_DEF,
+        STRUCT_RE_DEF,
+        STRUCT_META_RE_DEF,
         VAR_RE_DEF,					//变量重定义
         FUN_RE_DEF,					//函数重定义
-        STRUCT_RE_DEF,
+        STRUCT_UN_DEF,
+        STRUCT_META_UN_DEF,
+        TYPEDEF_UN_DEF,
         VAR_UN_DEC,					//变量未声明
         FUN_UN_DEC,					//函数未声明
         FUN_DEC_ERR,				//函数声明与定义不匹配

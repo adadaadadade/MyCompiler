@@ -234,7 +234,7 @@ Token* Lexer::nextToken()
                 else if(ch == '=')
                 {
                     scan();
-                    t = new Token(LET);
+                    t = new Token(LEQ);
                 }
                 else
                     t = new Token(LTH);
@@ -252,7 +252,7 @@ Token* Lexer::nextToken()
                 else if(ch == '=')
                 {
                     scan();
-                    t = new Token(GET);
+                    t = new Token(GEQ);
                 }
                 else
                     t = new Token(GTH);

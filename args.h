@@ -17,6 +17,8 @@ public:
     static bool show_char;
     static bool show_token;
     static bool show_ast;
+    static bool show_symtab;
+    static bool show_ir;
     
     static void get_args(int argc, char *argv[]);
     Args();

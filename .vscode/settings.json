@@ -52,6 +52,10 @@
         "streambuf": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "bit": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "*.def": "cpp"
     }
 }
