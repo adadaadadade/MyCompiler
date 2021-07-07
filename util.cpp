@@ -42,7 +42,7 @@ void outputTokens(Lexer lexer){
     Token* token = lexer.nextToken();
     while(token)
     {
-        cout << token->toString() << " ";
+        cout << token->to_string() << " ";
         if(token->tag == END)
             break;
         token = lexer.nextToken();

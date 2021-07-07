@@ -13,7 +13,7 @@ void InterInst::init()
     func = NULL;
 }
 
-InterInst::InterInst(IROP op, Var *rs, Var *arg1, Var *arg2)                  //一般运算指令
+InterInst::InterInst(IROP op, Var *rs, Var *arg1, Var *arg2) //一般运算指令
 {
     init();
     this->op = op;
@@ -22,7 +22,7 @@ InterInst::InterInst(IROP op, Var *rs, Var *arg1, Var *arg2)                  //
     this->arg2 = arg2;
 }
 
-InterInst::InterInst(IROP op, Func *fun, Var *rs)                              //函数调用指令,ENTRY,EXIT
+InterInst::InterInst(IROP op, Func *fun, Var *rs) //函数调用指令,ENTRY,EXIT
 {
     init();
     this->op = op;
@@ -30,23 +30,20 @@ InterInst::InterInst(IROP op, Func *fun, Var *rs)                              /
     this->result = rs;
 }
 
-
-InterInst::InterInst(IROP op, Var *arg1)                                      //参数进栈指令,NOP
+InterInst::InterInst(IROP op, Var *arg1) //参数进栈指令,NOP
 {
     init();
     this->op = op;
     this->arg1 = arg1;
 }
 
-
-InterInst::InterInst(string label)                                                                   //产生唯一标号
+InterInst::InterInst(string label) //产生唯一标号
 {
     init();
     this->label = label;
 }
 
-
-InterInst::InterInst(IROP op, InterInst *tar, Var *arg1, Var *arg2)    //条件跳转指令,return
+InterInst::InterInst(IROP op, InterInst *tar, Var *arg1, Var *arg2) //条件跳转指令,return
 {
     init();
     this->op = op;
@@ -55,8 +52,7 @@ InterInst::InterInst(IROP op, InterInst *tar, Var *arg1, Var *arg2)    //条件�
     this->arg2 = arg2;
 }
 
-
-void InterInst::replace(IROP op, Var *rs, Var *arg1, Var *arg2)               //替换表达式指令信息，用于常量表达式处理
+void InterInst::replace(IROP op, Var *rs, Var *arg1, Var *arg2) //替换表达式指令信息，用于常量表达式处理
 {
     init();
     this->op = op;
@@ -64,7 +60,6 @@ void InterInst::replace(IROP op, Var *rs, Var *arg1, Var *arg2)               //
     this->arg1 = arg1;
     this->arg2 = arg2;
 }
-
 
 void InterInst::replace(IROP op, InterInst *tar, Var *arg1, Var *arg2) //替换跳转指令信息，条件跳转优化
 {
@@ -75,19 +70,16 @@ void InterInst::replace(IROP op, InterInst *tar, Var *arg1, Var *arg2) //替换�
     this->arg2 = arg2;
 }
 
-
-InterInst::~InterInst()                                                                  //清理常量内存
+InterInst::~InterInst() //清理常量内存
 {
-
 }
-
 
 /*
 	是否条件转移指令JT,JF,Jcond
 */
 bool InterInst::is_jcond()
 {
-	return op>=IROP_JT&&op<=IROP_JNE;
+    return op >= IROP_JT && op <= IROP_JNE;
 }
 
 /*
@@ -95,7 +87,7 @@ bool InterInst::is_jcond()
 */
 bool InterInst::is_jmp()
 {
-	return op==IROP_JMP||op==IROP_RET||op==IROP_RETV;
+    return op == IROP_JMP || op == IROP_RET || op == IROP_RETV;
 }
 
 /*
@@ -103,7 +95,7 @@ bool InterInst::is_jmp()
 */
 bool InterInst::is_lb()
 {
-	return label!="";
+    return label != "";
 }
 
 /*
@@ -111,7 +103,7 @@ bool InterInst::is_lb()
 */
 bool InterInst::is_expr()
 {
-	return (op>=IROP_ASN&&op<=IROP_LOR||op==IROP_GET);//&&result->isBase();
+    return (op >= IROP_ASN && op <= IROP_LOR || op == IROP_GET); //&&result->isBase();
 }
 
 /*
@@ -119,7 +111,7 @@ bool InterInst::is_expr()
 */
 bool InterInst::unknown()
 {
-	return op==IROP_SET||op==IROP_PROC||op==IROP_CALL;
+    return op == IROP_SET || op == IROP_PROC || op == IROP_CALL;
 }
 
 IROP InterInst::get_op() //获取操作符
@@ -127,11 +119,11 @@ IROP InterInst::get_op() //获取操作符
     return op;
 }
 
-void InterInst::callToProc() //替换操作符，用于将CALL转化为PROC
+void InterInst::call_to_proc() //替换操作符，用于将CALL转化为PROC
 {
 }
 
-InterInst *InterInst::getTarget() //获取跳转指令的目标指令
+InterInst *InterInst::get_target() //获取跳转指令的目标指令
 {
     return target;
 }
@@ -264,22 +256,12 @@ string InterInst::to_string() //输出指令
         str = "\tJF\t" + target->label + "\t" + GETSTR(arg1) + GETSTR(arg2);
 
         break;
-    // case IROP_JG:printf("if( ");arg1->value();printf(" > ");arg2->value();printf(" )goto %s",
-    // 	target->label.c_str());break;
-    // case IROP_JGE:printf("if( ");arg1->value();printf(" >= ");arg2->value();printf(" )goto %s",
-    // 	target->label.c_str());break;
-    // case IROP_JL:printf("if( ");arg1->value();printf(" < ");arg2->value();printf(" )goto %s",
-    // 	target->label.c_str());break;
-    // case IROP_JLE:printf("if( ");arg1->value();printf(" <= ");arg2->value();printf(" )goto %s",
-    // 	target->label.c_str());break;
-    // case IROP_JE:printf("if( ");arg1->value();printf(" == ");arg2->value();printf(" )goto %s",
-    // 	target->label.c_str());break;
     case IROP_JNE:
-        str = "\tJNE\t" + target->label + "\t" + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tJNE\t" + target->label + "\t" + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_ARG:
-        str = "\tARG\t" + GETSTR(result) + GETSTR(arg1) + "\t" + GETSTR(arg2);
+        str = "\tARG\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_PROC:
@@ -287,27 +269,27 @@ string InterInst::to_string() //输出指令
 
         break;
     case IROP_CALL:
-        str = "\tCALL\t" + GETSTR(result) + func->get_name() + "\t"  + GETSTR(arg2);
+        str = "\tCALL\t" + GETSTR(result) + func->get_name() + "\t" + GETSTR(arg2);
 
         break;
     case IROP_RET:
-        str = "\tRET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tRET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_RETV:
-        str = "\tRETV\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tRETV\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_LEA:
-        str = "\tLEA\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tLEA\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_SET:
-        str = "\tSET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tSET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     case IROP_GET:
-        str = "\tGET\t" + GETSTR(result) + GETSTR(arg1) + "\t"  + GETSTR(arg2);
+        str = "\tGET\t" + GETSTR(result) + GETSTR(arg1) + GETSTR(arg2);
 
         break;
     }
@@ -318,21 +300,24 @@ InterCode::InterCode()
 {
 }
 
-InterCode::~InterCode() //清除内存
+InterCode::~InterCode()
 {
 }
 
-//管理操作
-void InterCode::add_inst(InterInst *inst) //添加一条中间代码
+void InterCode::add_inst(InterInst *inst)
 {
     inter_codes.push_back(inst);
 }
 
-//外部调用接口
-void InterCode::print() //输出指令
+void InterCode::print()
 {
     for (int i = 0; i < inter_codes.size(); i++)
     {
         printf("%s\n", inter_codes[i]->to_string().c_str());
     }
+}
+
+vector<InterInst *> &InterCode::get_code()
+{
+    return inter_codes;
 }

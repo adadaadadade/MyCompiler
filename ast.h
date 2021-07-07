@@ -28,7 +28,7 @@ class Node
 public:
     Node *parent;
     int deep;
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
     virtual void set_parent(Node* par);
@@ -57,7 +57,7 @@ public:
     AsnopType type;
 
     Asnop();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -69,7 +69,7 @@ public:
     string str;
 
     Str();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -82,7 +82,7 @@ public:
     string name;
 
     Chr();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -94,7 +94,7 @@ public:
     long long int value;
 
     Num();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -106,7 +106,7 @@ public:
     bool boollit;
 
     Bool();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -118,7 +118,7 @@ public:
     string name;
 
     Vid();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -131,7 +131,7 @@ public:
     string name;
 
     Sid();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -144,7 +144,7 @@ public:
     string name;
 
     Fid();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -157,7 +157,7 @@ public:
     string name;
 
     Aid();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -194,7 +194,7 @@ public:
 
     void add_tail(Tp *tail);
     
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
     //static bool tp_equal(Tp* a, Tp* b);
@@ -211,7 +211,7 @@ public:
     vector<Vid *> vid_list;
 
     Paralist();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -279,7 +279,7 @@ public:
     Exp();
     static Exp* binop_exp(Exp* lval,TokenType tag, Exp* rval);
     static Exp* unop_exp(TokenType tag, Exp* e);
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -293,7 +293,7 @@ public:
     Exp *exp;
 
     Decl();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -306,7 +306,7 @@ public:
     vector<Stmt *> stmt_list;
 
     Body();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -333,7 +333,7 @@ public:
     Exp *exp;
 
     Lv();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -357,7 +357,7 @@ public:
     Exp *exp;
 
     Simple();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -392,7 +392,7 @@ public:
     Body *body;
 
     Stmt();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -416,7 +416,7 @@ public:
     Paralist* pl;
 
     Gdecl();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -447,7 +447,7 @@ public:
     Aid *aid;
 
     Gdefn();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };
@@ -461,7 +461,7 @@ public:
     vector<Gdefn*> gdefn_list;
 
     Prog();
-    virtual string toString();
+    virtual string to_string();
     virtual void print();
     virtual string get_nodetype();
 };

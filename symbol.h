@@ -72,11 +72,12 @@ private:
     const static int int_size = 4;
     const static int char_size = 2;
     const static int bool_size = 2;
-    const static int pointer_size = 8;  //64位
-    const static int string_size = 8; //
+    const static int pointer_size = 4;  //64位
+    const static int string_size = 0; //
 
-    Tp *tp;            // 变量类型
     Var::BaseType base_type;
+    
+    Tp *tp;            // 变量类型
     
     Scope *scope; // 作用域路径
     string name;         // 变量类型
@@ -87,8 +88,9 @@ private:
     
     //几维数组
     int array_dim;
-    // -1 为一位指针， 正数为数组 定义信息
-    vector<int> a_p_tail;
+    //正数为数组 定义信息, 表示大小
+    vector<int> array_sizes;
+    int pointer_deep;
     //对应scope
     int s_offset;
     //对于func
@@ -96,10 +98,9 @@ private:
     bool is_struct;
     Struct* stru;
 
-    bool is_literal;           // 是否字面量
-
+    bool literal;           // 是否字面量
+    bool ref; // 是否为引用
     bool is_temp;
-
     bool is_offset_var;
     bool left;
 
@@ -117,10 +118,11 @@ private:
     //通过basetype 设置basetype， basesize 和size
     void set_from_basetype(BaseType type);
 public:
+    int reg_id;
 
     Var();
     //tp 和 name 生成 Var；
-    Var(Tp* tp, string name, bool is_temp = false); 
+    Var(Tp* tp, string name, bool is_temp = false);
     Var(Var::BaseType type, string structname = "", bool is_temp = false);
     Var(Var::BaseType type, bool is_temp = false);
     //生成字面量
@@ -137,24 +139,37 @@ public:
     void set_name(string name);
     void set_s_offset(int offset);
     int get_s_offset();
+    void set_f_offset(int offset);
+    int get_f_offset();
+    void set_pointer_deep(int deep);
+    int get_pointer_deep();
+    int get_basesize();
+
     void set_left(bool left);
     string to_string();
     int get_size();
     int get_offset_lit(vector<int> &array_index);
     int get_arr_offset(int index_cnt);
-    Var* get_basevar();
+    Var* get_step();
     BaseType get_basetype();
     Struct *get_struct();
+    int get_val();
 
-    void sub_pointer();
+    void array_sizes_pop_back();
+    void array_sizes_pop_front();
+    void array_sizes_clear();
 
+    bool is_base();
+    bool is_half();
     bool is_pointer();
+    bool is_ref();
     bool is_array();
     bool is_left();
+    bool is_string();
+    bool has_init();
+    bool is_literal();
 
     static bool check_type(Var* lvar, Var* rvar);
-
-
 };
 
 class Scope
@@ -162,7 +177,9 @@ class Scope
     int scope_id;
     Scope *parent;
     int size;
-    
+    int arg_size;
+    int f_offset;
+
     //hash函数
 	struct string_hash{
 		size_t operator()(const string& str) const{
@@ -171,17 +188,22 @@ class Scope
 	};
 
     hash_map<string, Var*, string_hash> var_tab; //变量表,每个元素是同名变量的链表
-	hash_map<int, Scope*> scope_tab;
+	vector<string> var_list;
+    hash_map<int, Scope*> scope_tab;
     
 public:
-    Scope(int id);
+    Scope(int id, bool is_func_scope = false);
     ~Scope();
     void add_var(Var* var);
     Var* get_var(string name);
+    void add_arg(Var* var);
+    Var* get_arg(string name);
     void add_scope(Scope *scope);
     int get_size();
     Scope *get_parent();
     void set_parent(Scope* parent);
+    void set_f_offset(int offset);
+    int get_f_offset();
 
     void print();
 };
@@ -198,7 +220,11 @@ class Func
     int max_depth;
     int cur_esp;
 
+    bool relocated;
+
     InterCode intercode;
+
+
 
 public:
     InterInst* lfb;
@@ -215,6 +241,9 @@ public:
     void leave_scope();
     void add_inst(InterInst* inst);
     Var* get_ret();
+    Scope* get_scope();
+    vector<Var*> &get_para_vars();
+    bool is_relocated();
 
     void print_scopes();
     void print_ir();

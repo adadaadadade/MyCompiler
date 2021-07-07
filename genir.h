@@ -16,11 +16,15 @@ class GenIR
     void loop_pop();
 
     Var *gen_lv(Lv *lv);
+    Var *gen_tail_lv(Var *head, Lv *tail);
+    Var *gen_dotfid_lv(Var *head, Lv *tail);
+    Var *gen_tofid_lv(Var *head, Lv *tail);
+    Var *gen_array_lv(Var *head, Lv *tail);
 
     Var *gen_expr(Exp *exp);
     
     Var *gen_vid_expr(Exp *exp);
-
+    Var *gen_tail_expr(Var *head, Exp *tail);
     Var *gen_dotfid_expr(Var *head, Exp *tail);
     Var *gen_tofid_expr(Var *head, Exp *tail);
     Var *gen_array_expr(Var *head, Exp *tail);
@@ -64,9 +68,9 @@ class GenIR
     Var *gen_rdec(Var *var);
 
     Var *gen_get(Var *var);
-    void *gen_get(Var *result, Var *var);
+    void gen_get(Var *result, Var *var);
     Var *gen_set(Var *var);
-    void *gen_set(Var *result, Var *var);
+    void gen_set(Var *result, Var *var);
 
     void gen_para(Var*arg);//参数传递语句
 
@@ -117,5 +121,5 @@ public:
     Var *gen_oneopleft(IROP opt, Var *val);             //左单目运算语句
     Var *gen_oneopright(Var *val, IROP opt);            //右单目运算语句
 
-    void gen_tempdecl(Var *var); //产生临时变量初始化语句
+    void gen_tempdecl(Var *var, bool add_to_scope = true); //产生临时变量初始化语句
 };

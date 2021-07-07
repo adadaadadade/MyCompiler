@@ -219,6 +219,46 @@ void Symtab::gen_asmdata(FILE *file)
 }
 */
 
+void Symtab::gen_asmdata(FILE *file)
+{
+	/*
+	//生成常量字符串,.rodata段
+	fprintf(file, ".section .rodata\n");
+	hash_map<string, Var *, string_hash>::iterator strIt, strEnd = strTab.end();
+	for (strIt = strTab.begin(); strIt != strEnd; ++strIt)
+	{
+		Var *str = strIt->second;									  //常量字符串变量
+		fprintf(file, "%s:\n", str->get_name().c_str());			  //var:
+		fprintf(file, "\t.ascii \"%s\"\n", str->getRawStr().c_str()); //.ascii "abc\000"
+	}
+	//生成数据段和bss段
+	fprintf(file, ".data\n");
+	vector<Var *> glbVars = getGlbVars(); //获取所有全局变量
+	for (unsigned int i = 0; i < glbVars.size(); i++)
+	{
+		Var *var = glbVars[i];
+		fprintf(file, "\t.global %s\n", var->get_name().c_str()); //.global var
+		if (!var->unInit())
+		{													//变量初始化了,放在数据段
+			fprintf(file, "%s:\n", var->get_name().c_str()); //var:
+			if (var->is_base())
+			{ //基本类型初始化 100 'a'
+				const char *t = var->is_half() ? ".byte" : ".word";
+				fprintf(file, "\t%s %d\n", t, var->get_val()); //.byte 65  .word 100
+			}
+			else
+			{															 //字符指针初始化
+				fprintf(file, "\t.word %s\n", var->getPtrVal().c_str()); //.word .L0
+			}
+		}
+		else
+		{																			  //放在bss段
+			fprintf(file, "\t.comm %s,%d\n", var->get_name().c_str(), var->get_size()); //.comm var,4
+		}
+	}
+	*/
+}
+
 void Symtab::gen_asm(char *filename)
 {
 	FILE *file = fopen(filename, "w"); //创建输出文件

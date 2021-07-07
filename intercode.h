@@ -73,15 +73,6 @@ private:
     void init(); //初始化
 
 public:
-    //初始化
-
-    //数据流信息
-
-    //参数不通过拷贝，而通过push入栈
-    //指令在的作用域路径
-    //vector<int>path;//该字段为ARG指令准备，ARG的参数并不代表ARG的位置！！！尤其是常量！！！
-    //int offset;//参数的栈帧偏移
-
     //构造
     //一般运算指令
     InterInst(IROP op, Var *rs, Var *arg1, Var *arg2 = NULL);
@@ -101,19 +92,17 @@ public:
     ~InterInst();
 
     //外部调用接口
-    void setFirst(); //标记首指令
 
     bool is_jcond(); //是否条件转移指令JT,JF,Jcond
     bool is_jmp();   //是否直接转移指令JMP,return
-    bool isFirst(); //是首指令
     bool is_lb();    //是否是标签
     bool is_dec();   //是否是声明
     bool is_expr();  //是基本类型表达式运算,可以对指针取值
     bool unknown(); //不确定运算结果影响的运算(指针赋值，函数调用)
 
     IROP get_op();        //获取操作符
-    void callToProc();       //替换操作符，用于将CALL转化为PROC
-    InterInst *getTarget();  //获取跳转指令的目标指令
+    void call_to_proc();       //替换操作符，用于将CALL转化为PROC
+    InterInst *get_target();  //获取跳转指令的目标指令
     Var *get_result();        //获取返回值
     Var *get_arg1();          //获取第一个参数
     Var *get_arg2();          //获取第二个参数
@@ -137,10 +126,7 @@ public:
     //管理操作
     void add_inst(InterInst *inst); //添加一条中间代码
 
-    //关键操作
-    void markFirst(); //标识“首指令”
-
     //外部调用接口
     void print();                //输出指令
-    vector<InterInst *> &getCode(); //获取中间代码序列
+    vector<InterInst *> &get_code(); //获取中间代码序列
 };

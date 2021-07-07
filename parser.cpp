@@ -45,7 +45,7 @@ void Parser::move()
     look = lexer.nextToken();
     if (Args::show_token)
     {
-        printf("%s", look->toString().c_str()); //输出词法记号——测试
+        printf("%s", look->to_string().c_str()); //输出词法记号——测试
         if (look->tag == END)
             printf("\n");
     }

@@ -22,36 +22,126 @@ Var *GenIR::gen_lv(Lv *lv)
 {
     Var *var;
     int pointer_cnt = 0;
-    Lv* i = lv;
-/*     while ((lv->lv_tail != NULL) && (lv->lv_tail->type == Lv::LVPOINTER))
+    Lv *i = lv;
+    /*     while ((lv->lv_tail != NULL) && (lv->lv_tail->type == Lv::LVPOINTER))
     {
         lv = lv->lv_tail;
         pointer_cnt ++;
     } */
-    
-    if(lv->type == Lv::LVPOINTER)
-    {
 
+    if (lv->type == Lv::LVPOINTER)
+    {
     }
     else
     {
-        if(var = symtab.get_var(lv->vid->name))
+        if (var = symtab.get_var(lv->vid->name))
         {
-            if(lv->lv_tail == NULL)
+            if (lv->lv_tail == NULL)
             {
                 return var;
             }
             else
             {
-
+                return gen_tail_lv(var, lv->lv_tail);
             }
         }
         else
         {
             SEMERROR(Error::VAR_UN_DEC, lv->vid->name);
         }
-        
     }
+}
+
+Var *GenIR::gen_tail_lv(Var *head, Lv *tail)
+{
+    switch (tail->type)
+    {
+    case Lv::LVDOTVID:
+        return gen_dotfid_lv(head, tail);
+        break;
+    case Lv::LVTOVID:
+        return gen_tofid_lv(head, tail);
+        break;
+    case Lv::LVARRAY:
+        return gen_array_lv(head, tail);
+        break;
+    default:
+        break;
+    }
+    Error::fatal();
+    return NULL;
+}
+
+Var *GenIR::gen_dotfid_lv(Var *head, Lv *tail)
+{
+    Struct *stru;
+    if (stru = head->get_struct())
+    {
+        Var *meta;
+        if (meta = stru->get_var(tail->fid->name))
+        {
+            Var *fvar = new Var(meta, true);
+            gen_tempdecl(fvar, false);
+            fvar->set_f_offset(head->get_s_offset() + stru->get_offset(meta->get_name()));
+            if (tail->lv_tail != NULL)
+                return gen_tail_lv(fvar, tail->lv_tail);
+            else
+                return fvar;
+        }
+        else
+        {
+            Error::sem_error(Error::STRUCT_META_UN_DEF);
+        }
+    }
+    else
+    {
+        Error::sem_error(Error::STRUCT_UN_DEF);
+    }
+    return NULL;
+}
+
+Var *GenIR::gen_tofid_lv(Var *head, Lv *tail)
+{
+}
+
+Var *GenIR::gen_array_lv(Var *head, Lv *tail)
+{
+    int index_cnt = 0;
+    Var *offset = new Var(head, true);
+    ////////////////////////////////////////可能和数组长不一致
+    Lv *i = tail;
+    offset->array_sizes_pop_back();
+    while ((i->lv_tail != NULL) && (i->lv_tail->type = Lv::LVARRAY))
+    {
+        i = i->lv_tail;
+        offset->array_sizes_pop_back();
+    }
+        
+    i = tail;
+    //设为指针
+    
+    gen_tempdecl(offset);
+    
+    //symtab.add_inst(new InterInst(IROP_LEA, ));
+    gen_assign(offset, head);
+
+    // offset = offset + offset[i] * gen_expr(i)
+    gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i->exp))));
+    index_cnt++;
+
+    while ((i->lv_tail != NULL) && (i->lv_tail->type = Lv::LVARRAY))
+    {
+        i = i->lv_tail;
+        // offset = offset + offset[i] * gen_expr(i)
+        gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i->exp))));
+        index_cnt++;
+    }
+    offset->set_pointer_deep(offset->get_pointer_deep() + 1);
+    //这里返回一个指针
+    if (i->lv_tail != NULL)
+        return gen_tail_lv(offset, i->lv_tail);
+    else
+        return offset;
 }
 
 Var *GenIR::gen_expr(Exp *exp)
@@ -74,7 +164,8 @@ Var *GenIR::gen_expr(Exp *exp)
         return new Var(exp->boollit);
         break;
     case Exp::NULLLIT:
-        //return new Var()
+        // 32位
+        return new Var(0);
         break;
     case Exp::VID:
         return gen_vid_expr(exp);
@@ -127,19 +218,7 @@ Var *GenIR::gen_vid_expr(Exp *exp)
         //有可能是  有可能是 数组索引，a.fid a->fid
         else
         {
-            Exp *tail = exp->exp_tail;
-            if (tail->is_array_index)
-            {
-                return gen_array_expr(var, tail);
-            }
-            else if (tail->type == Exp::DOTFID)
-            {
-                return gen_dotfid_expr(var, tail);
-            }
-            else if (tail->type == Exp::TOFID)
-            {
-                return gen_tofid_expr(var, tail);
-            }
+            return gen_tail_expr(var, exp->exp_tail);
         }
     }
     //找不到 未定义
@@ -150,21 +229,39 @@ Var *GenIR::gen_vid_expr(Exp *exp)
     }
 }
 
+Var *GenIR::gen_tail_expr(Var *head, Exp *tail)
+{
+    if(tail->type == Exp::DOTFID)
+    {
+        return gen_dotfid_expr(head, tail);
+    }
+    else if(tail->type == Exp::TOFID)
+    {
+        return gen_tofid_expr(head, tail);
+    }
+    else if(tail->is_array_index)
+    {
+        return gen_array_expr(head, tail);
+    }
+    Error::fatal();
+    return NULL;
+}
+
 Var *GenIR::gen_dotfid_expr(Var *head, Exp *tail)
 {
     Struct *stru;
-    if(stru = head->get_struct())
+    if (stru = head->get_struct())
     {
         Var *meta;
-        if(meta = stru->get_var(tail->fid->name))
+        if (meta = stru->get_var(tail->fid->name))
         {
-            Var *temp = new Var(meta, true);
-            gen_tempdecl(temp);
-            
-            Var *temp_offset = gen_add(head, new Var(stru->get_offset(meta->get_name())));
-
-            return gen_ptr(temp_offset);
-            
+            Var *fvar = new Var(meta, true);
+            gen_tempdecl(fvar, false);
+            fvar->set_f_offset(head->get_s_offset() + stru->get_offset(meta->get_name()));
+            if (tail->exp_tail != NULL)
+                return gen_tail_expr(fvar, tail->exp_tail);
+            else
+                return fvar;
         }
         else
         {
@@ -175,19 +272,19 @@ Var *GenIR::gen_dotfid_expr(Var *head, Exp *tail)
     {
         Error::sem_error(Error::STRUCT_UN_DEF);
     }
+    return NULL;
 }
 
 Var *GenIR::gen_tofid_expr(Var *head, Exp *tail)
 {
     Struct *stru;
-    if(stru = head->get_struct())
+    if (stru = head->get_struct())
     {
         Var *meta;
-        if(meta = stru->get_var(tail->fid->name))
+        if (meta = stru->get_var(tail->fid->name))
         {
             Var *temp1 = gen_get(head);
             Var *temp2 = new Var(meta, true);
-            
         }
         else
         {
@@ -198,31 +295,44 @@ Var *GenIR::gen_tofid_expr(Var *head, Exp *tail)
     {
         Error::sem_error(Error::STRUCT_UN_DEF, head->get_name());
     }
+    return NULL;
 }
 
+//一次读完多维数组
 Var *GenIR::gen_array_expr(Var *head, Exp *tail)
 {
     int index_cnt = 0;
-    Var *offset = new Var(Var::POINTER, true);
-    gen_tempdecl(offset);
+    Var *offset = new Var(head, true);
     Exp *i = tail;
-    //symtab.add_inst(new InterInst(IROP_LEA, ));
+    offset->array_sizes_pop_back();
+    while ((i->exp_tail != NULL) && (i->exp_tail->is_array_index == true))
+    {
+        i = i->exp_tail;
+        offset->array_sizes_pop_back();
+    }
+    i = tail;
+    
+    gen_tempdecl(offset);
+    
     gen_assign(offset, head);
 
     // offset = offset + offset[i] * gen_expr(i)
     gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i))));
-    index_cnt ++;
+    index_cnt++;
 
     while ((i->exp_tail != NULL) && (i->exp_tail->is_array_index == true))
     {
         i = i->exp_tail;
         // offset = offset + offset[i] * gen_expr(i)
         gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i))));
-        index_cnt ++;
+        index_cnt++;
     }
-    return offset;
+    offset->set_pointer_deep(offset->get_pointer_deep() + 1);
+    if (i->exp_tail != NULL)
+        return gen_tail_expr(offset, i->exp_tail);
+    else
+        return offset;
 }
-
 
 Var *GenIR::gen_binop_expr(Exp *exp)
 {
@@ -380,242 +490,249 @@ Var *GenIR::gen_allocarray_expr(Exp *exp)
 
 Var *GenIR::gen_lor(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LOR, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LOR, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_land(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LAND, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LAND, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_bor(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_BOR, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_BOR, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_bxor(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_BXOR, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_BXOR, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_band(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_BAND, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_BAND, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_lth(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LTH, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LTH, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_leq(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LEQ, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LEQ, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_gth(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_GTH, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_GTH, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_geq(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_GEQ, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_GEQ, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_equ(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_EQU, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_EQU, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_neq(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_NEQ, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_NEQ, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_lmo(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LMO, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LMO, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_rmo(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_RMO, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_RMO, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_add(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_ADD, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_ADD, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_sub(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_SUB, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_SUB, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_mul(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_MUL, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_MUL, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_div(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_DIV, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_DIV, temp, lvar, rvar));
+    return temp;
 }
 
 Var *GenIR::gen_mod(Var *lvar, Var *rvar)
 {
-    Var *tmp = new Var(lvar, true); //基本类型
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_MOD, tmp, lvar, rvar));
-    return tmp;
+    Var *temp = new Var(lvar, true); //基本类型
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_MOD, temp, lvar, rvar));
+    return temp;
 }
 
 //单目
 Var *GenIR::gen_not(Var *var)
 {
-    Var *tmp = new Var(var); //生成整数
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_NOT, tmp, var)); //中间代码tmp=!val
-    return tmp;
+    Var *temp = new Var(var, true); //生成整数
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_NOT, temp, var)); //中间代码tmp=!val
+    return temp;
 }
 
 Var *GenIR::gen_minus(Var *var)
 {
-    Var *tmp = new Var(var, true); //生成整数
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_NEG, tmp, var)); //中间代码tmp=-val
-    return tmp;
+    Var *temp = new Var(var, true); //生成整数
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_NEG, temp, var)); //中间代码tmp=-val
+    return temp;
 }
 
 Var *GenIR::gen_bneg(Var *var)
 {
-    Var *tmp = new Var(var, true); //生成整数
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_BNEG, tmp, var)); //中间代码tmp=-val
-    return tmp;
+    Var *temp = new Var(var, true); //生成整数
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_BNEG, temp, var)); //中间代码tmp=-val
+    return temp;
 }
 //取址语句
 
 Var *GenIR::gen_lea(Var *var)
 {
-    Var *tmp = new Var(var, true); //生成整数
-    gen_tempdecl(tmp);
-    symtab.add_inst(new InterInst(IROP_LEA, tmp, var)); //中间代码tmp=&val
-    return tmp;
+    Var *temp = new Var(Var::POINTER, true); //生成整数
+    //temp->set_pointer_deep(temp->get_pointer_deep() + 1);
+    gen_tempdecl(temp);
+    symtab.add_inst(new InterInst(IROP_LEA, temp, var)); //中间代码tmp=&val
+    return temp;
 }
 
 //指针
 Var *GenIR::gen_ptr(Var *var)
 {
-/*     Var *tmp = new Var(var);
-    tmp->setLeft(true);   //指针运算结果为左值
-    tmp->setPointer(var); //设置指针变量
-    symtab.addVar(tmp);   //产生表达式需要根据使用者判断，推迟！
-    return tmp;
+    /*     Var *temp = new Var(var);
+    temp->setLeft(true);   //指针运算结果为左值
+    temp->setPointer(var); //设置指针变量
+    symtab.addVar(temp);   //产生表达式需要根据使用者判断，推迟！
+    return temp;
      */
 }
 
 Var *GenIR::gen_linc(Var *var)
 {
-    Var *tmp = gen_assign(var);                                              //拷贝
-    symtab.add_inst(new InterInst(IROP_ADD, var, var, var->get_basevar())); //中间代码val++
-    return tmp;
+    Var *temp = gen_assign(var);                                         //拷贝
+    symtab.add_inst(new InterInst(IROP_ADD, var, var, var->get_step())); //中间代码val++
+    return temp;
 }
 
 Var *GenIR::gen_ldec(Var *var)
 {
-    Var *tmp = gen_assign(var);                                              //拷贝
-    symtab.add_inst(new InterInst(IROP_SUB, var, var, var->get_basevar())); //中间代码val++
-    return tmp;
+    Var *temp = gen_assign(var);                                         //拷贝
+    symtab.add_inst(new InterInst(IROP_SUB, var, var, var->get_step())); //中间代码val++
+    return temp;
 }
 
 Var *GenIR::gen_rinc(Var *var)
 {
-    Var *tmp = gen_assign(var);                                              //拷贝
-    symtab.add_inst(new InterInst(IROP_ADD, var, var, var->get_basevar())); //中间代码val++
-    return tmp;
+    Var *temp = gen_assign(var);                                         //拷贝
+    symtab.add_inst(new InterInst(IROP_ADD, var, var, var->get_step())); //中间代码val++
+    return temp;
 }
 
 Var *GenIR::gen_rdec(Var *var)
 {
-    Var *tmp = gen_assign(var);                                              //拷贝
-    symtab.add_inst(new InterInst(IROP_SUB, var, var, var->get_basevar())); //中间代码val++
-    return tmp;
+    Var *temp = gen_assign(var);                                         //拷贝
+    symtab.add_inst(new InterInst(IROP_SUB, var, var, var->get_step())); //中间代码val++
+    return temp;
 }
 
 Var *GenIR::gen_get(Var *var)
 {
-    Var *temp = new Var(var, true);
-    temp->sub_pointer();
+    Var *temp = new Var(Var::INT, true);
+    temp->set_pointer_deep(temp->get_pointer_deep() - 1);
     gen_tempdecl(temp);
     symtab.add_inst(new InterInst(IROP_GET, temp, var));
+    return temp;
 }
 
-void GenIR::gen_para(Var*arg)//参数传递语句
+void GenIR::gen_set(Var *result, Var *var)
 {
-    	/*
+    symtab.add_inst(new InterInst(IROP_SET, var, result));
+}
+
+void GenIR::gen_para(Var *arg) //参数传递语句
+{
+    /*
 		注释部分为删除代码，参数入栈不能通过拷贝，只能push！
 	*/
-	//if(arg->isRef())arg=genAssign(arg);
-	//无条件复制参数！！！传值，不传引用！！！
-	//Var*newVar=new Var(symtab.getScopePath(),arg);//创建参数变量
-	//symtab.addVar(newVar);//添加无效变量，占领栈帧！！
-	InterInst*argInst=new InterInst(IROP_ARG, arg);//push arg!!!
-	//argInst->offset=newVar->getOffset();//将变量的地址与arg指令地址共享！！！没有优化地址也能用
-	//argInst->path=symtab.getScopePath();//记录路径！！！为了寄存器分配时计算地址
-	symtab.add_inst(argInst);  
+    //if(arg->is_ref())arg=genAssign(arg);
+    //无条件复制参数！！！传值，不传引用！！！
+    //Var*newVar=new Var(symtab.getScopePath(),arg);//创建参数变量
+    //symtab.addVar(newVar);//添加无效变量，占领栈帧！！
+    InterInst *argInst = new InterInst(IROP_ARG, arg); //push arg!!!
+    //argInst->offset=newVar->getOffset();//将变量的地址与arg指令地址共享！！！没有优化地址也能用
+    //argInst->path=symtab.getScopePath();//记录路径！！！为了寄存器分配时计算地址
+    symtab.add_inst(argInst);
 }
 
 GenIR::GenIR(InterCode &ir, Prog &ast, Symtab &symtab) : ir(ir), ast(ast), symtab(symtab)
@@ -636,14 +753,14 @@ void GenIR::gen_ir()
             Paralist *pl = gdefn->pl;
 
             Var *ret = new Var(gdefn->tp, gdefn->vid->name);
-            Scope *scope = new Scope(symtab.new_scope_id());
+            Scope *scope = new Scope(symtab.new_scope_id(), true);
             vector<Var *> *para_vars = new vector<Var *>;
             int pl_tp_list_size = pl->tp_list.size();
             for (int i = 0; i < pl_tp_list_size; i++)
             {
                 Var *para = new Var(pl->tp_list[i], pl->vid_list[i]->name);
                 para_vars->push_back(para);
-                scope->add_var(para);
+                scope->add_arg(para);
             }
 
             Func *func = new Func(ret, gdefn->vid->name, symtab.new_func_id(), scope, *para_vars);
@@ -661,21 +778,21 @@ void GenIR::gen_ir()
 
 void GenIR::func_head(Func *func)
 {
-    symtab.add_inst(new InterInst(IROP_ENTRY));
+    symtab.add_inst(new InterInst(IROP_ENTRY, func));
     symtab.add_inst(func->lfb);
 }
 
 void GenIR::func_tail(Func *func)
 {
     symtab.add_inst(func->lfe);
-    symtab.add_inst(new InterInst(IROP_EXIT));
+    symtab.add_inst(new InterInst(IROP_EXIT, func));
 }
 
 void GenIR::gen_body(Body *body, Scope *scope)
 {
     bool scope_changed = false;
     Scope *newscope = scope;
-    if(scope == NULL)
+    if (scope == NULL)
     {
         newscope = new Scope(symtab.new_scope_id());
         symtab.cur_scope->add_scope(newscope);
@@ -689,6 +806,11 @@ void GenIR::gen_body(Body *body, Scope *scope)
     {
         decl = body->decl_list[i];
         Var *var = new Var(decl->tp, decl->vid->name);
+        if (decl->exp != NULL)
+        {
+            Var *initval = gen_expr(decl->exp);
+            gen_assign(var, initval);
+        }
         symtab.add_var(var);
         symtab.add_inst(new InterInst(IROP_DEC, var));
     }
@@ -821,15 +943,24 @@ void GenIR::gen_return(Stmt *stmt, Scope *parent)
     return;
 }
 
-void GenIR::gen_tempdecl(Var *var)
+void GenIR::gen_tempdecl(Var *var, bool add_to_scope)
 {
     symtab.add_inst(new InterInst(IROP_DEC, var)); //添加变量声明指令
-    symtab.add_var(var);
+    if (add_to_scope)
+        symtab.add_var(var);
 }
 
+//不等返回-1， 等于则继续
 void GenIR::gen_assert(Stmt *stmt, Scope *parent)
 {
-    //
+    Var *var1 = gen_expr(stmt->exp1);
+    Var *var2 = gen_expr(stmt->exp2);
+
+    InterInst *_exit;
+    Var *cond = gen_expr(stmt->exp1);
+    gen_ifhead(gen_neq(var1, var2), _exit);
+    symtab.add_inst(new InterInst(IROP_RETV, symtab.cur_func->lfe, new Var(-1)));
+    gen_elsetail(_exit);
     return;
 }
 
@@ -861,7 +992,7 @@ void GenIR::gen_whilecond(Var *cond, InterInst *_exit)
         /*
         if (cond->isVoid())
             cond = Var::getTrue(); //处理空表达式
-        else if (cond->isRef())
+        else if (cond->is_ref())
             cond = genAssign(cond); //while(*p),while(a[0])
         */
         symtab.add_inst(new InterInst(IROP_JF, _exit, cond));
@@ -891,7 +1022,7 @@ void GenIR::gen_forcondbegin(Var *cond, InterInst *&_step, InterInst *&_stmt, In
         /*
         if (cond->isVoid())
             cond = Var::getTrue(); //处理空表达式
-        else if (cond->isRef())
+        else if (cond->is_ref())
             cond = genAssign(cond); //for(*p),for(a[0])
         */
         symtab.add_inst(new InterInst(IROP_JF, _exit, cond));
@@ -920,7 +1051,7 @@ void GenIR::gen_ifhead(Var *cond, InterInst *&_else)
     if (cond)
     {
         /*
-        if (cond->isRef())
+        if (cond->is_ref())
             cond = genAssign(cond); //if(*p),if(a[0])
         */
         symtab.add_inst(new InterInst(IROP_JF, _else, cond));
@@ -952,49 +1083,49 @@ void GenIR::gen_simple(Simple *simple, Scope *parent)
     case Simple::ASN:
         switch (simple->asnop->type)
         {
-        case Asnop::ASN :
+        case Asnop::ASN:
             gen_assign(lvar, gen_expr(simple->exp));
             break;
-        case Asnop::ASNADD :
+        case Asnop::ASNADD:
             gen_assign(lvar, gen_add(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNSUB :
+        case Asnop::ASNSUB:
             gen_assign(lvar, gen_sub(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNMUL :
+        case Asnop::ASNMUL:
             gen_assign(lvar, gen_mul(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNDIV :
+        case Asnop::ASNDIV:
             gen_assign(lvar, gen_div(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNMOD :
+        case Asnop::ASNMOD:
             gen_assign(lvar, gen_mod(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNLMO :
+        case Asnop::ASNLMO:
             gen_assign(lvar, gen_lmo(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNRMO :
+        case Asnop::ASNRMO:
             gen_assign(lvar, gen_rmo(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNAND :
+        case Asnop::ASNAND:
             gen_assign(lvar, gen_band(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNXOR :
+        case Asnop::ASNXOR:
             gen_assign(lvar, gen_bxor(lvar, gen_expr(simple->exp)));
             break;
-        case Asnop::ASNOR :
+        case Asnop::ASNOR:
             gen_assign(lvar, gen_bor(lvar, gen_expr(simple->exp)));
             break;
         default:
             break;
         }
-        
+
         break;
     case Simple::ADDADD:
-        gen_assign(lvar, gen_add(lvar, lvar->get_basevar()));
+        gen_assign(lvar, gen_add(lvar, lvar->get_step()));
         break;
     case Simple::SUBSUB:
-        gen_assign(lvar, gen_sub(lvar, lvar->get_basevar()));
+        gen_assign(lvar, gen_sub(lvar, lvar->get_step()));
         break;
     case Simple::EXP:
         gen_expr(simple->exp);
@@ -1007,57 +1138,86 @@ void GenIR::gen_simple(Simple *simple, Scope *parent)
 
 Var *GenIR::gen_assign(Var *val) //变量拷贝赋值，用于指针左值引用和变量复制
 {
-    Var *tmp = new Var(val); //拷贝变量信息
-    gen_tempdecl(tmp);
+    Var *temp = new Var(val); //拷贝变量信息
+    gen_tempdecl(temp);
     /*
-    if (val->isRef())
+    if (val->is_ref())
     {
         //中间代码tmp=*(val->ptr)
-        symtab.addInst(new InterInst(OP_GET, tmp, val->getPointer()));
+        symtab.addInst(new InterInst(OP_GET, temp, val->getPointer()));
     }
     */
-    symtab.add_inst(new InterInst(IROP_ASN, tmp, val)); //中间代码tmp=val
-    return tmp;
+    symtab.add_inst(new InterInst(IROP_ASN, temp, val)); //中间代码tmp=val
+    return temp;
 }
 
 Var *GenIR::gen_assign(Var *lvar, Var *rvar)
 {
-    	//被赋值对象必须是左值
+    //被赋值对象必须是左值
     /*
 	if(!lvar->is_left()){
 		SEMERROR(Error::EXPR_NOT_LEFT_VAL);//左值错误
 		return rvar;
 	}
-    */
-	//类型检查
-	if(!Var::check_type(lvar,rvar)){
-		SEMERROR(Error::ASSIGN_TYPE_ERR, rvar->get_name());//赋值类型不匹配
-		return rvar;
-	}
-    /*
-	//考虑右值(*p)
-	if(rvar->isRef()){
-		if(!lvar->isRef()){
-			//中间代码lvar=*(rvar->ptr)
-			symtab.addInst(new InterInst(OP_GET,lvar,rvar->getPointer()));
-			return lvar;
-		}
-		else{
-			//中间代码*(lvar->ptr)=*(rvar->ptr),先处理右值
-			rvar=genAssign(rvar);
-		}
-	}
+    
+    //类型检查
+    if (!Var::check_type(lvar, rvar))
+    {
+        SEMERROR(Error::ASSIGN_TYPE_ERR, rvar->get_name()); //赋值类型不匹配
+        return rvar;
+    }
+
+    //考虑右值(*p)
+    if (rvar->is_ref())
+    {
+        if (!lvar->is_ref())
+        {
+            //中间代码lvar=*(rvar->ptr)
+            symtab.add_inst(new InterInst(IROP_GET, lvar, rvar->getPointer()));
+            return lvar;
+        }
+        else
+        {
+            //中间代码*(lvar->ptr)=*(rvar->ptr),先处理右值
+            rvar = gen_assign(rvar);
+        }
+    }
     //赋值运算
-	if(lvar->isRef()){
-		//中间代码*(lvar->ptr)=rvar
-		symtab.addInst(new InterInst(OP_SET,rvar,lvar->getPointer()));
-	}
-	else{
-		//中间代码lvar=rvar
-		
-	}
-    */
-	
-    symtab.add_inst(new InterInst(IROP_ASN,lvar,rvar));
-	return lvar;
+    if (lvar->is_ref())
+    {
+        //中间代码*(lvar->ptr)=rvar
+        symtab.add_inst(new InterInst(IROP_SET, rvar, lvar->getPointer()));
+    }
+    else
+    {
+        //中间代码lvar=rvar
+    }*/
+    Var *rtemp = rvar;
+    if(lvar->is_pointer())
+    {
+        if(lvar->get_pointer_deep() == rvar->get_pointer_deep())
+            symtab.add_inst(new InterInst(IROP_ASN, lvar, rtemp));
+        else
+        {
+            gen_set(lvar, rtemp);
+        }
+    }
+    else
+    {
+        if(rvar->is_ref())
+        {
+            rtemp = gen_lea(rvar);
+        }
+        if(rvar->is_pointer())
+        {
+            int deep = rvar->get_pointer_deep();
+            for(int i = 0; i < deep; i ++)
+            {
+                rtemp = gen_get(rtemp);
+            }
+        }
+        symtab.add_inst(new InterInst(IROP_ASN, lvar, rtemp));
+    }
+    
+    return lvar;
 }

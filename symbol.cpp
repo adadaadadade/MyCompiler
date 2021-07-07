@@ -1,6 +1,9 @@
 #include "symbol.h"
 #include "error.h"
 #include "symtab.h"
+#include "selector.h"
+#include "iloc.h"
+#include "platform.h"
 
 void Var::init()
 {
@@ -11,13 +14,16 @@ void Var::init()
     base_size = -1;
     size = -1;
     array_dim = 0;
+    pointer_deep = 0;
     s_offset = 0;
+    f_offset = 0;
     stru = NULL;
     is_struct = false;
-    is_literal = false;
+    literal = false;
     is_temp = false;
     is_offset_var = false;
     ptr = NULL;
+    reg_id = -1;
 }
 
 void Var::set_from_basetype(BaseType type)
@@ -59,8 +65,13 @@ Var::Var()
 {
 }
 
-Var::Var(Tp *tp, string name, bool is_temp) : name(name), tp(tp), is_temp(is_temp) //tp 和 name 生成 Var
+Var::Var(Tp *tp, string name, bool is_temp) //tp 和 name 生成 Var
 {
+    init();
+    this->name = name;
+    this->tp = tp;
+    this->is_temp = is_temp;
+
     switch (tp->type)
     {
     case Tp::INT:
@@ -102,11 +113,11 @@ Var::Var(Tp *tp, string name, bool is_temp) : name(name), tp(tp), is_temp(is_tem
             i = i->tp_tail;
             if (i->type == Tp::POINTER)
             {
-                a_p_tail.push_back(-1);
+                pointer_deep ++;
             }
             else if (i->type == Tp::ARRAY)
             {
-                a_p_tail.push_back(i->size);
+                array_sizes.push_back(i->size);
             }
             else
             {
@@ -123,24 +134,24 @@ Var::Var(Tp *tp, string name, bool is_temp) : name(name), tp(tp), is_temp(is_tem
         else if (this->is_array())
         {
             array_dim = 0;
-            int tp_tail_size = a_p_tail.size();
+            int tp_tail_size = array_sizes.size();
             int s = 0;
             int cnt = 1;
             for (int i = tp_tail_size - 1; i >= 0; i--)
             {
-                if (a_p_tail[i] == -1)
+                if (array_sizes[i] == -1)
                 {
                     base_type = POINTER;
                     base_size = pointer_size;
                     break;
                 }
-                else if (a_p_tail[i] == 0)
+                else if (array_sizes[i] == 0)
                 {
                     Error::sem_error(Error::ARRAY_LEN_INVALID);
                 }
                 else
                 {
-                    cnt *= a_p_tail[i];
+                    cnt *= array_sizes[i];
                     array_dim++;
                 }
             }
@@ -149,78 +160,89 @@ Var::Var(Tp *tp, string name, bool is_temp) : name(name), tp(tp), is_temp(is_tem
     }
 }
 
-Var::Var(Var::BaseType type, string structname, bool is_temp) : base_type(type), is_temp(is_temp)
+Var::Var(Var::BaseType type, string structname, bool is_temp)
 {
     init();
+    this->base_type = type;
+    this->is_temp = is_temp;
     set_from_basetype(type);
-    if(is_temp)
+    if (is_temp)
         name = ".L" + std::to_string(Symtab::get_symtab()->new_label_id());
     else
         name = "";
 }
 
-Var::Var(Var::BaseType type, bool is_temp) : base_type(type), is_temp(is_temp)
+Var::Var(Var::BaseType type, bool is_temp)
 {
     init();
+    this->base_type = type;
+    this->is_temp = is_temp;
     set_from_basetype(type);
-    if(is_temp)
+    if (is_temp)
         name = ".L" + std::to_string(Symtab::get_symtab()->new_label_id());
     else
         name = "";
 }
 
-Var::Var(int int_var) : int_var(int_var)
+Var::Var(int int_var)
 {
-    init();
-    is_literal = true;
+    //init();
+    this->int_var = int_var;
+    literal = true;
     set_from_basetype(INT);
 }
 
-Var::Var(char char_var) : chr_var(char_var)
+Var::Var(char char_var)
 {
     init();
-    is_literal = true;
+    this->chr_var = char_var;
+    literal = true;
     set_from_basetype(CHAR);
 }
 
-Var::Var(bool bool_var) : bool_var(bool_var)
+Var::Var(bool bool_var)
 {
     init();
-    is_literal = true;
+    this->bool_var = bool_var;
+    literal = true;
     set_from_basetype(BOOL);
 }
 
-Var::Var(string str_var) : str_var(str_var)
+Var::Var(string str_var)
 {
     init();
-    is_literal = true;
+    this->str_var = str_var;
+    literal = true;
     set_from_basetype(STRING);
 }
 
 Var::Var(Var *var, bool is_temp)
 {
     init();
+    this->is_temp = is_temp;
     tp = var->tp;
     base_type = var->base_type;
     scope = var->scope;
-    
+
     base_size = var->base_size;
     size = var->size;
     array_dim = var->array_dim;
+    pointer_deep = var->pointer_deep;
     //s_offset = 0;
     stru = var->stru;
     is_struct = var->is_struct;
-    //is_literal = var->is_literal;
+    //literal = var->literal;
     //is_temp = var->is_temp;
     is_offset_var = var->is_offset_var;
     ptr = NULL;
-    int a_p_tail_size = var->a_p_tail.size();
-    for (int i = 0; i < a_p_tail_size; i ++)
+    array_sizes.clear();
+    int length = var->array_sizes.size();
+    for (int i = 0; i < length; i++)
     {
-        a_p_tail[i] = var->a_p_tail[i];
+        array_sizes.push_back(var->array_sizes[i]);
     }
-    
-    if(is_temp)
+
+    if (is_temp)
         name = ".L" + std::to_string(Symtab::get_symtab()->new_label_id());
     else
         name = "";
@@ -250,9 +272,35 @@ int Var::get_s_offset()
     return s_offset;
 }
 
+void Var::set_f_offset(int offset)
+{
+    this->f_offset = offset;
+}
+
+int Var::get_f_offset()
+{
+    //函数内变量 偏移为负
+    return -f_offset;
+}
+
+void Var::set_pointer_deep(int deep)
+{
+    pointer_deep = deep;
+}
+
+int Var::get_pointer_deep()
+{
+    return pointer_deep;
+}
+
+int Var::get_basesize()
+{
+    return base_size;
+}
+
 string Var::to_string()
 {
-    if (is_literal)
+    if (literal)
     {
         if (base_type == INT)
         {
@@ -321,21 +369,22 @@ int Var::get_arr_offset(int index_cnt)
     }
     int offset = 0;
     int cnt = 1;
-    int tp_tail_size = a_p_tail.size();
+    int tp_tail_size = array_sizes.size();
     for (int i = tp_tail_size - 1; i >= index_cnt; i--)
     {
         if (i != tp_tail_size - 1)
         {
-            cnt *= a_p_tail[i + 1];
+            cnt *= array_sizes[i + 1];
         }
     }
     offset = cnt * base_size;
-    return offset;
+    return -offset;
 }
 
-Var* Var::get_basevar()
+Var *Var::get_step()
 {
-    return NULL;
+    if(is_base())
+        return new Var(1);
 }
 
 Var::BaseType Var::get_basetype()
@@ -343,32 +392,79 @@ Var::BaseType Var::get_basetype()
     return base_type;
 }
 
-Struct* Var::get_struct()
+Struct *Var::get_struct()
 {
     return stru;
 }
 
-void Var::sub_pointer()
+int Var::get_val()
 {
-    if(is_pointer())
+    switch (base_type)
     {
-        a_p_tail.pop_back();
+    case INT:
+        return int_var;
+        break;
+    case CHAR:
+        return chr_var;
+        break;
+    case BOOL:
+        return bool_var;
+        break;
+    default:
+        break;
     }
-    else
-        Error::fatal();
+}
+
+void Var::array_sizes_pop_back()
+{
+    int back = array_sizes.back();
+    size = size / back;
+    array_sizes.pop_back();
+}
+
+void Var::array_sizes_pop_front()
+{
+    array_sizes.erase(array_sizes.begin());
+}
+
+void Var::array_sizes_clear()
+{
+    array_sizes.clear();
+}
+
+bool Var::is_base()
+{
+    return (array_sizes.size() == 0) && (base_type != STRING);
+}
+
+bool Var::is_half()
+{
+    return is_base() && (base_size == 2);
 }
 
 bool Var::is_pointer()
 {
-    if ((a_p_tail.size() > 0) && (a_p_tail.back() == -1))
+    /*
+    if ((array_sizes.size() > 0) && (array_sizes.back() == -1))
         return true;
     else
         return false;
+    */
+    return (pointer_deep != 0);
+}
+
+bool Var::is_ref()
+{
+    if(is_array())
+        return true;
+    if(base_type == STRUCT && !is_pointer())
+        return true;
+    return false;
 }
 
 bool Var::is_array()
 {
-    if ((a_p_tail.size() > 0) && (a_p_tail.back() >= 0))
+    if ((array_sizes.size() > 0) && (array_sizes.back() >= 0))
         return true;
     else
         return false;
@@ -379,7 +475,22 @@ bool Var::is_left()
     return left;
 }
 
-bool Var::check_type(Var* lvar, Var *rvar)
+bool Var::is_string()
+{
+    return (is_pointer() && (get_pointer_deep() == 1) && (base_type == CHAR)) || (!is_pointer() && base_type == STRING);
+}
+
+bool Var::has_init()
+{
+    return true;
+}
+
+bool Var::is_literal()
+{
+    return literal;
+}
+
+bool Var::check_type(Var *lvar, Var *rvar)
 {
     return true;
 }
@@ -397,23 +508,29 @@ int Var::get_offset_lit(vector<int> &array_index)
     int offset = 0;
     int cnt = 0;
     int size = 1;
-    int tp_tail_size = a_p_tail.size();
+    int tp_tail_size = array_sizes.size();
     for (int i = tp_tail_size - 1; i >= tp_tail_size - array_dim; i--)
     {
         if (i != tp_tail_size - 1)
         {
-            size *= a_p_tail[i + 1];
+            size *= array_sizes[i + 1];
         }
         cnt += array_index[i] * size;
     }
     offset = cnt * base_size;
-    return offset;
+    return -offset;
 }
 
-Scope::Scope(int id) : scope_id(id)
+Scope::Scope(int id, bool is_func_scope) : scope_id(id)
 {
     parent = NULL;
     size = 0;
+    arg_size = 0 - 4;
+    f_offset = 0;
+    if(is_func_scope)
+    {
+        size = Arm32Plat::stack_base + 4;
+    }
 }
 
 Scope::~Scope()
@@ -424,9 +541,13 @@ void Scope::add_var(Var *var)
 {
     if (var_tab.find(var->get_name()) == var_tab.end())
     { //没有该名字的变量
+        int v_size = var->get_size();
+        v_size += (4 - v_size % 4) % 4; //按4的正数倍取大小
         var->set_s_offset(size);
+        var->set_f_offset(f_offset + size);
+        size += v_size;
         var_tab[var->get_name()] = var;
-        size += var->get_size();
+        var_list.push_back(var->get_name());
     }
     else
     {
@@ -453,26 +574,69 @@ Var *Scope::get_var(string name)
     }
 }
 
+void Scope::add_arg(Var *var)
+{
+    if (var_tab.find(var->get_name()) == var_tab.end())
+    { //没有该名字的变量
+        int v_size = var->get_size();
+        v_size += (4 - v_size % 4) % 4; //按4的正数倍取大小
+        var->set_s_offset(arg_size);
+        var->set_f_offset(arg_size);
+        arg_size -= v_size;
+        var_tab[var->get_name()] = var;
+        var_list.push_back(var->get_name());
+    }
+    else
+    {
+        Error::sem_error(Error::VAR_RE_DEF, var->get_name());
+    }
+}
+
+Var *Scope::get_arg(string name)
+{
+    if (var_tab.find(name) != var_tab.end())
+    { //有该名字的变量
+        return var_tab[name];
+    }
+    else
+    {
+        if (parent != NULL)
+        {
+            return parent->get_var(name);
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+}
+
 void Scope::add_scope(Scope *scope)
 {
     this->scope_tab[scope->scope_id] = scope;
     scope->set_parent(this);
+    scope->set_f_offset(size);
     return;
 }
 
 int Scope::get_size()
 {
+    /*
     size = 0;
     hash_map<string, Var *, string_hash>::iterator var_iter;
     for (var_iter = var_tab.begin(); var_iter != var_tab.end(); var_iter++)
     {
         size += var_iter->second->get_size();
     }
+    */
+    int max_child_size = 0;
     hash_map<int, Scope *>::iterator scope_iter;
     for (scope_iter = scope_tab.begin(); scope_iter != scope_tab.end(); scope_iter++)
     {
-        size += scope_iter->second->get_size();
+        int this_size = scope_iter->second->get_size();
+        max_child_size = (this_size > max_child_size) ? this_size : max_child_size;
     }
+    size += max_child_size;
     //如果有size则直接返回
     return size;
 }
@@ -482,18 +646,28 @@ Scope *Scope::get_parent()
     return parent;
 }
 
-void Scope::set_parent(Scope* parent)
+void Scope::set_parent(Scope *parent)
 {
-    this->parent = parent; 
+    this->parent = parent;
+}
+
+void Scope::set_f_offset(int offset)
+{
+    f_offset = offset;
+}
+
+int Scope::get_f_offset()
+{
+    return f_offset;
 }
 
 void Scope::print()
 {
     printf("Scope %d , size : %d, list: \n", scope_id, get_size());
-    hash_map<string, Var *, string_hash>::iterator var_iter;
-    for (var_iter = var_tab.begin(); var_iter != var_tab.end(); var_iter++)
+    int var_cnt = var_list.size();
+    for(int i = 0; i < var_cnt; i ++)
     {
-        printf("%s\ts_offset : %d\n", var_iter->second->to_string().c_str(), var_iter->second->get_s_offset());
+        printf("%s\tf_offset : %d\n", var_list[i].c_str(), var_tab[var_list[i]]->get_f_offset());
     }
     hash_map<int, Scope *>::iterator scope_iter;
     for (scope_iter = scope_tab.begin(); scope_iter != scope_tab.end(); scope_iter++)
@@ -512,7 +686,9 @@ Struct::Struct(string name, vector<Tp *> &tp_list, vector<string> &fname_list) :
         Var *var = new Var(tp_list[i], fname_list[i]);
         this->var_tab[var->get_name()] = var;
         this->offset_tab[fname_list[i]] = offset;
-        offset += var->get_size();
+        int v_size = var->get_size();
+        v_size += (4 - v_size % 4) % 4; //按4的正数倍取大小
+        offset += v_size;
     }
     size = offset;
 }
@@ -559,8 +735,8 @@ int Struct::get_offset(string fname)
 void Struct::print()
 {
     printf("Sturct name : %s, size = %d\n", name.c_str(), size);
-    hash_map<string, Var*, string_hash>::iterator v_iter;
-    for (v_iter = var_tab.begin(); v_iter != var_tab.end(); v_iter ++)
+    hash_map<string, Var *, string_hash>::iterator v_iter;
+    for (v_iter = var_tab.begin(); v_iter != var_tab.end(); v_iter++)
     {
         printf("\t%s", v_iter->second->to_string().c_str());
         printf("\t%d\n", offset_tab[v_iter->first]);
@@ -598,6 +774,8 @@ void Typedef::print()
 
 Func::Func(Var *ret, string name, int f_id, Scope *scope, vector<Var *> &para_vars) : name(name), ret(ret), func_id(f_id), scope(scope), para_vars(para_vars)
 {
+    relocated = false;
+
     this->lfb = new InterInst(".LFB" + to_string(f_id));
     this->lfe = new InterInst(".LFE" + to_string(f_id));
 }
@@ -638,9 +816,24 @@ void Func::add_inst(InterInst *inst)
     intercode.add_inst(inst);
 }
 
-Var* Func::get_ret()
+Var *Func::get_ret()
 {
     return ret;
+}
+
+Scope *Func::get_scope()
+{
+    return scope;
+}
+
+vector<Var*> &Func::get_para_vars()
+{
+    return para_vars;
+}
+
+bool Func::is_relocated()
+{
+    return relocated;
 }
 
 void Func::print_scopes()
@@ -651,4 +844,21 @@ void Func::print_scopes()
 void Func::print_ir()
 {
     intercode.print();
+}
+
+void Func::gen_asm(FILE *file)
+{
+    //导出最终的代码,如果优化则是优化后的中间代码，否则就是普通的中间代码
+    vector<InterInst *> code;
+    code = intercode.get_code();
+    const char *pname = name.c_str();
+    fprintf(file, "#函数%s代码\n", pname);
+    fprintf(file, "\t.global %s\n", pname); //.global fun\n
+    fprintf(file, "%s:\n", pname);          //fun:\n
+    ILoc il;                                //ILOC代码
+    //将最终的中间代码转化为ILOC代码
+    Selector sl(code, il); //指令选择器
+    sl.select();
+    //将优化后的ILOC代码输出为汇编代码
+    il.output(file);
 }

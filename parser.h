@@ -10,7 +10,7 @@ class Parser
     Lexer &lexer;
     Symtab &symtab;
 
-    Prog *ST;
+    Prog *ast;
     Token *look;
     vector<Token *> token_buf;
 

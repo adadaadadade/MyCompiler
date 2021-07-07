@@ -5,17 +5,17 @@
 
 extern const string tokenName[];
 
-string Node::toString()
+string Node::to_string()
 {
     return "Node";
 }
 
 void Node::print()
 {
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
-void Node::set_parent(Node* par)
+void Node::set_parent(Node *par)
 {
     parent = par;
     deep = par->deep + 1;
@@ -28,23 +28,22 @@ string Node::get_nodetype()
 
 Prog::Prog()
 {
-
 }
 
-string Prog::toString()
+string Prog::to_string()
 {
     return "Prog";
 }
 
 void Prog::print()
 {
-    for(int i = 0; i < deep; i ++)
+    for (int i = 0; i < deep; i++)
         printf("\t");
-    
-    cout << toString() << endl;
-    for(int i = 0; i < this->gdecl_gdefn_list.size(); i ++)
+
+    cout << to_string() << endl;
+    for (int i = 0; i < this->gdecl_gdefn_list.size(); i++)
         this->gdecl_gdefn_list[i]->print();
-    
+
     //programs->print();
     //next->print();
 }
@@ -56,37 +55,35 @@ string Prog::get_nodetype()
 
 string Gdecl::TypeName[] = {
     "STRUCTDECL",
-    "FUNCDECL"
-};
+    "FUNCDECL"};
 
 Gdecl::Gdecl()
 {
     vid = NULL;
     tp = NULL;
     pl = NULL;
-
 }
 
-string Gdecl::toString()
+string Gdecl::to_string()
 {
     return "Gdecl : " + TypeName[type];
 }
 
 void Gdecl::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
     switch (type)
-    
+
     {
-    case FUNCDECL :
+    case FUNCDECL:
         tp->print();
         vid->print();
         pl->print();
         break;
-    
-    case STRUCTDECL :
+
+    case STRUCTDECL:
         vid->print();
         break;
 
@@ -103,8 +100,7 @@ string Gdecl::get_nodetype()
 string Gdefn::TypeName[] = {
     "STRUCTDEFN",
     "FUNCDEFN",
-    "TYPEDEF"
-};
+    "TYPEDEF"};
 
 Gdefn::Gdefn()
 {
@@ -115,18 +111,18 @@ Gdefn::Gdefn()
     aid = NULL;
 }
 
-string Gdefn::toString()
+string Gdefn::to_string()
 {
     return "Gdefn : " + TypeName[type];
 }
 
 void Gdefn::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
     P(sid);
-    for(int i = 0; i < tp_list.size(); i ++)
+    for (int i = 0; i < tp_list.size(); i++)
     {
         tp_list[i]->print();
         fid_list[i]->print();
@@ -143,22 +139,21 @@ string Gdefn::get_nodetype()
     return this->nodetype;
 }
 
-
 Paralist::Paralist()
 {
 }
 
-string Paralist::toString()
+string Paralist::to_string()
 {
     return "Paralist";
 }
 
 void Paralist::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
-    for(int i = 0; i < tp_list.size(); i ++)
+    cout << to_string() << endl;
+    for (int i = 0; i < tp_list.size(); i++)
     {
         tp_list[i]->print();
         vid_list[i]->print();
@@ -199,27 +194,26 @@ Body::Body()
 {
 }
 
-string Body::toString()
+string Body::to_string()
 {
     return "Body";
 }
 
 void Body::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
-    for(int i = 0; i < decl_list.size(); i ++)
-        ((Decl*)decl_list[i])->print();
-    for(int i = 0; i < stmt_list.size(); i ++)
-        ((Stmt*)stmt_list[i])->print();
+    cout << to_string() << endl;
+    for (int i = 0; i < decl_list.size(); i++)
+        ((Decl *)decl_list[i])->print();
+    for (int i = 0; i < stmt_list.size(); i++)
+        ((Stmt *)stmt_list[i])->print();
 }
 
 string Body::get_nodetype()
 {
     return this->nodetype;
 }
-
 
 Decl::Decl()
 {
@@ -228,21 +222,20 @@ Decl::Decl()
     exp = NULL;
 }
 
-string Decl::toString()
+string Decl::to_string()
 {
     return "Decl";
 }
 
 void Decl::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
-    
+    cout << to_string() << endl;
+
     P(tp);
     P(vid);
     P(exp);
-
 }
 
 string Decl::get_nodetype()
@@ -260,8 +253,7 @@ string Stmt::TypeName[] = {
     "RETURN",
     "BODY",
     "ASSERT",
-    "EMPTY"
-};
+    "EMPTY"};
 
 Stmt::Stmt()
 {
@@ -274,16 +266,16 @@ Stmt::Stmt()
     body = NULL;
 }
 
-string Stmt::toString()
+string Stmt::to_string()
 {
     return "Stmt : " + TypeName[type];
 }
 
 void Stmt::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 
     P(simple1);
     P(simple2);
@@ -303,8 +295,7 @@ string Simple::TypeName[] = {
     "ASN",
     "ADDADD",
     "SUBSUB",
-    "EXP"
-};
+    "EXP"};
 
 Simple::Simple()
 {
@@ -313,16 +304,16 @@ Simple::Simple()
     exp = NULL;
 }
 
-string Simple::toString()
+string Simple::to_string()
 {
     return "Simple : " + TypeName[type];
 }
 
 void Simple::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 
     P(lv);
     P(asnop);
@@ -334,14 +325,12 @@ string Simple::get_nodetype()
     return this->nodetype;
 }
 
-
 string Lv::TypeName[] = {
     "VID",
     "LVDOTVID",
     "LVTOVID",
     "LVPOINTER",
-    "LVARRAY"
-};
+    "LVARRAY"};
 
 Lv::Lv()
 {
@@ -352,16 +341,16 @@ Lv::Lv()
     exp = NULL;
 }
 
-string Lv::toString()
+string Lv::to_string()
 {
     return "Lv: " + TypeName[type];
 }
 
 void Lv::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 
     P(vid);
     P(lv);
@@ -383,8 +372,7 @@ string Tp::TypeName[] = {
     "POINTER",
     "ARRAY",
     "STRUCT",
-    "AID"
-};
+    "AID"};
 
 Tp::Tp()
 {
@@ -394,7 +382,7 @@ Tp::Tp()
     size = 0;
 }
 
-Tp::Tp(TpType type):type(type)
+Tp::Tp(TpType type) : type(type)
 {
     switch (type)
     {
@@ -408,32 +396,32 @@ Tp::Tp(TpType type):type(type)
         //size = 2;
         break;
     case Tp::STRING:
-        
+
         break;
     case Tp::STRUCT:
-        
+
         break;
     case Tp::ARRAY:
-        
+
         break;
     default:
         break;
     }
 }
 
-Tp::Tp(Tp* tp)
+Tp::Tp(Tp *tp)
 {
-    if(tp->sid != NULL)
+    if (tp->sid != NULL)
     {
         sid = new Sid();
         sid->name = tp->sid->name;
     }
-    if(tp->aid != NULL)
+    if (tp->aid != NULL)
     {
         aid = new Aid();
         aid->name = tp->sid->name;
     }
-    if(tp->tp_tail != NULL)
+    if (tp->tp_tail != NULL)
     {
         tp_tail = new Tp(tp->tp_tail);
         tp_tail->set_parent(this);
@@ -451,25 +439,24 @@ void Tp::add_tail(Tp *tp)
     tp->set_parent(i);
 }
 
-string Tp::toString()
+string Tp::to_string()
 {
     if (type == ARRAY)
-        return "Tp : " + TypeName[type] + ", size : " +to_string(size);
+        return "Tp : " + TypeName[type] + ", size : " + std::to_string(size);
     return "Tp : " + TypeName[type];
 }
 
 void Tp::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
-    
+    cout << to_string() << endl;
+
     //P(tp);
     P(sid);
     P(aid);
     P(tp_tail);
     //printf("%p", tp_tail);
-
 }
 
 string Tp::get_nodetype()
@@ -533,8 +520,7 @@ string Exp::TypeName[] = {
     "ARRAY",
     "POINTER",
     "ALLOC",
-    "ALLOCARRAY"
-};
+    "ALLOCARRAY"};
 
 Exp::Exp()
 {
@@ -549,53 +535,56 @@ Exp::Exp()
     is_func_arg = false;
 }
 
-Exp* Exp::binop_exp(Exp* lval,TokenType tag, Exp* rval)
+Exp *Exp::binop_exp(Exp *lval, TokenType tag, Exp *rval)
 {
-    Exp* result = new Exp();
+    Exp *result = new Exp();
     result->type = BINOP;
-    result->exp1 = lval; result->exp1->set_parent(result);
-    result->exp2 = rval; result->exp2->set_parent(result);
+    result->exp1 = lval;
+    result->exp1->set_parent(result);
+    result->exp2 = rval;
+    result->exp2->set_parent(result);
     result->tag = tag;
 
     return result;
 }
 
-Exp* Exp::unop_exp(TokenType tag, Exp* e)
+Exp *Exp::unop_exp(TokenType tag, Exp *e)
 {
-    Exp* result = new Exp();
+    Exp *result = new Exp();
     result->type = UNOP;
-    result->exp1 = e; result->exp1->set_parent(result);
+    result->exp1 = e;
+    result->exp1->set_parent(result);
     result->tag = tag;
 
     return result;
 }
 
-string Exp::toString()
+string Exp::to_string()
 {
     string str = "Exp : ";
-    if(is_array_index)
+    if (is_array_index)
         str = "Array Index Exp : ";
-    if(is_func_arg)
+    if (is_func_arg)
         str = "Func Arg Exp : ";
-    if(type == BINOP)
+    if (type == BINOP)
         return str + TypeName[type] + ",val :" + tokenName[tag];
-     if(type == UNOP)
+    if (type == UNOP)
         return str + TypeName[type] + ",val :" + tokenName[tag];
-    if(type == NUMLIT)
-        return str + TypeName[type] + ",val :" + to_string(numlit);
-    if(type == CHRLIT)
-        return str + TypeName[type] + ",val :" + to_string(chrlit);
-    if(type == STRLIT)
+    if (type == NUMLIT)
+        return str + TypeName[type] + ",val :" + std::to_string(numlit);
+    if (type == CHRLIT)
+        return str + TypeName[type] + ",val :" + std::to_string(chrlit);
+    if (type == STRLIT)
         return str + TypeName[type] + ",val :" + strlit;
-    
+
     return str + TypeName[type];
 }
 
 void Exp::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
     P(exp1);
     P(exp2);
     P(exp3);
@@ -676,23 +665,22 @@ string Asnop::TypeName[] = {
     "ASNRMO",
     "ASNAND",
     "ASNXOR",
-    "ASNOR"
-};
+    "ASNOR"};
 
 Asnop::Asnop()
 {
 }
 
-string Asnop::toString()
+string Asnop::to_string()
 {
     return "Asnop: " + TypeName[type];
 }
 
 void Asnop::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Asnop::get_nodetype()
@@ -700,21 +688,20 @@ string Asnop::get_nodetype()
     return this->nodetype;
 }
 
-
 Str::Str()
 {
 }
 
-string Str::toString()
+string Str::to_string()
 {
     return "Str : " + str;
 }
 
 void Str::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Str::get_nodetype()
@@ -722,21 +709,20 @@ string Str::get_nodetype()
     return this->nodetype;
 }
 
-
 Chr::Chr()
 {
 }
 
-string Chr::toString()
+string Chr::to_string()
 {
     return "Chr : " + ch;
 }
 
 void Chr::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Chr::get_nodetype()
@@ -744,21 +730,20 @@ string Chr::get_nodetype()
     return this->nodetype;
 }
 
-
 Num::Num()
 {
 }
 
-string Num::toString()
+string Num::to_string()
 {
-    return "Num : " + to_string(value);
+    return "Num : " + std::to_string(value);
 }
 
 void Num::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Num::get_nodetype()
@@ -766,12 +751,11 @@ string Num::get_nodetype()
     return this->nodetype;
 }
 
-
 Bool::Bool()
 {
 }
 
-string Bool::toString()
+string Bool::to_string()
 {
     if (boollit)
         return "Bool : true";
@@ -781,9 +765,9 @@ string Bool::toString()
 
 void Bool::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Bool::get_nodetype()
@@ -791,21 +775,20 @@ string Bool::get_nodetype()
     return this->nodetype;
 }
 
-
 Vid::Vid()
 {
 }
 
-string Vid::toString()
+string Vid::to_string()
 {
     return "Vid: " + name;
 }
 
 void Vid::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Vid::get_nodetype()
@@ -813,21 +796,20 @@ string Vid::get_nodetype()
     return this->nodetype;
 }
 
-
 Sid::Sid()
 {
 }
 
-string Sid::toString()
+string Sid::to_string()
 {
     return "Sid : " + name;
 }
 
 void Sid::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Sid::get_nodetype()
@@ -835,21 +817,20 @@ string Sid::get_nodetype()
     return this->nodetype;
 }
 
-
 Fid::Fid()
 {
 }
 
-string Fid::toString()
+string Fid::to_string()
 {
     return "Fid : " + name;
 }
 
 void Fid::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Fid::get_nodetype()
@@ -857,21 +838,20 @@ string Fid::get_nodetype()
     return this->nodetype;
 }
 
-
 Aid::Aid()
 {
 }
 
-string Aid::toString()
+string Aid::to_string()
 {
     return "Aid : " + name;
 }
 
 void Aid::print()
 {
-    for(int i = 0; i < (deep = parent->deep + 1); i ++)
+    for (int i = 0; i < (deep = parent->deep + 1); i++)
         printf("\t");
-    cout << toString() << endl;
+    cout << to_string() << endl;
 }
 
 string Aid::get_nodetype()

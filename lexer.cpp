@@ -149,6 +149,7 @@ Token* Lexer::nextToken()
                 break;
             case '~':   // ~
                 t = new Token(BNEG);
+                scan();
                 break;
             case '+':   // + += ++
                 scan();

@@ -1,5 +1,4 @@
 #include "common.h"
-#include "compiler.h"
 #include "error.h"
 #include "scanner.h"
 #include "lexer.h"
@@ -40,5 +39,6 @@ int main(int argc, char *argv[])
     {
         symtab.print_ir();
     }
+    symtab.gen_asm(Args::outputfile);
     //outputTokens(lexer);
 }

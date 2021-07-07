@@ -71,4 +71,8 @@ class InterInst;
 
 class GenIR;
 
+class Selector;
+class ILoc;
+
 class Args;
+

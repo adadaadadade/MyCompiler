@@ -30,7 +30,7 @@ Token::Token(TokenType t) : tag(t)
 {
 }
 
-string Token::toString()
+string Token::to_string()
 {
 	return string("<") + tokenName[tag] + string(">\n");
 }
@@ -43,7 +43,7 @@ Id::Id(string n) : Token(ID), name(n)
 {
 }
 
-string Id::toString()
+string Id::to_string()
 {
 	return string("<") + tokenName[tag] + string(":") + name + string(">\n");
 }
@@ -52,7 +52,7 @@ Numlit::Numlit(int v, NumType nT) : Token(NUMLIT), val(v), numType(nT)
 {
 }
 
-string Numlit::toString()
+string Numlit::to_string()
 {
 	stringstream ss;
 	ss << val;
@@ -63,7 +63,7 @@ Chrlit::Chrlit(char c) : Token(CHRLIT), ch(c)
 {
 }
 
-string Chrlit::toString()
+string Chrlit::to_string()
 {
 	stringstream ss;
 	ss << ch;
@@ -74,7 +74,7 @@ Strlit::Strlit(string s) : Token(STRLIT), str(s)
 {
 }
 
-string Strlit::toString()
+string Strlit::to_string()
 {
 	return string("<") + tokenName[tag] + string(":") + str + string(">\n");
 }
