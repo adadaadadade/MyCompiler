@@ -1041,10 +1041,12 @@ Exp *Parser::idexpr(Exp *e)
     Exp *exp = new Exp();
     if (match(LBRACK))
     {
-        exp = expr();
+        exp->exp1 = expr();
+        exp->exp1->set_parent(exp);
         e->exp_tail = exp;
         e->exp_tail->set_parent(e);
         exp->is_array_index = true;
+        exp->type = Exp::ARRAY;
         if (!match(RBRACK))
             Error::syn_error(Error::RBRACK_LOST, look);
         return idexpr(exp);

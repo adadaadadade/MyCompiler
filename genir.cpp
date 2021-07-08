@@ -303,6 +303,7 @@ Var *GenIR::gen_array_expr(Var *head, Exp *tail)
 {
     int index_cnt = 0;
     Var *offset = new Var(head, true);
+    Var *ret;
     Exp *i = tail;
     offset->array_sizes_pop_back();
     while ((i->exp_tail != NULL) && (i->exp_tail->is_array_index == true))
@@ -317,21 +318,23 @@ Var *GenIR::gen_array_expr(Var *head, Exp *tail)
     gen_assign(offset, head);
 
     // offset = offset + offset[i] * gen_expr(i)
-    gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i))));
+    gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i->exp1))));
     index_cnt++;
 
     while ((i->exp_tail != NULL) && (i->exp_tail->is_array_index == true))
     {
         i = i->exp_tail;
         // offset = offset + offset[i] * gen_expr(i)
-        gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i))));
+        gen_assign(offset, gen_add(offset, gen_mul(new Var(head->get_arr_offset(index_cnt)), gen_expr(i->exp1))));
         index_cnt++;
     }
     offset->set_pointer_deep(offset->get_pointer_deep() + 1);
+    ret = gen_get(offset);
+    return ret;
     if (i->exp_tail != NULL)
         return gen_tail_expr(offset, i->exp_tail);
     else
-        return offset;
+        return ret;
 }
 
 Var *GenIR::gen_binop_expr(Exp *exp)
@@ -709,7 +712,7 @@ Var *GenIR::gen_rdec(Var *var)
 Var *GenIR::gen_get(Var *var)
 {
     Var *temp = new Var(Var::INT, true);
-    temp->set_pointer_deep(temp->get_pointer_deep() - 1);
+    //temp->set_pointer_deep(temp->get_pointer_deep() - 1);
     gen_tempdecl(temp);
     symtab.add_inst(new InterInst(IROP_GET, temp, var));
     return temp;
@@ -722,16 +725,7 @@ void GenIR::gen_set(Var *result, Var *var)
 
 void GenIR::gen_para(Var *arg) //参数传递语句
 {
-    /*
-		注释部分为删除代码，参数入栈不能通过拷贝，只能push！
-	*/
-    //if(arg->is_ref())arg=genAssign(arg);
-    //无条件复制参数！！！传值，不传引用！！！
-    //Var*newVar=new Var(symtab.getScopePath(),arg);//创建参数变量
-    //symtab.addVar(newVar);//添加无效变量，占领栈帧！！
     InterInst *argInst = new InterInst(IROP_ARG, arg); //push arg!!!
-    //argInst->offset=newVar->getOffset();//将变量的地址与arg指令地址共享！！！没有优化地址也能用
-    //argInst->path=symtab.getScopePath();//记录路径！！！为了寄存器分配时计算地址
     symtab.add_inst(argInst);
 }
 
@@ -1019,12 +1013,7 @@ void GenIR::gen_forcondbegin(Var *cond, InterInst *&_step, InterInst *&_stmt, In
     _step = new NEWLABEL; //产生循环动作标签
     if (cond)
     {
-        /*
-        if (cond->isVoid())
-            cond = Var::getTrue(); //处理空表达式
-        else if (cond->is_ref())
-            cond = genAssign(cond); //for(*p),for(a[0])
-        */
+        
         symtab.add_inst(new InterInst(IROP_JF, _exit, cond));
         symtab.add_inst(new InterInst(IROP_JMP, _stmt)); //执行循环体
     }
@@ -1153,45 +1142,6 @@ Var *GenIR::gen_assign(Var *val) //变量拷贝赋值，用于指针左值引用
 
 Var *GenIR::gen_assign(Var *lvar, Var *rvar)
 {
-    //被赋值对象必须是左值
-    /*
-	if(!lvar->is_left()){
-		SEMERROR(Error::EXPR_NOT_LEFT_VAL);//左值错误
-		return rvar;
-	}
-    
-    //类型检查
-    if (!Var::check_type(lvar, rvar))
-    {
-        SEMERROR(Error::ASSIGN_TYPE_ERR, rvar->get_name()); //赋值类型不匹配
-        return rvar;
-    }
-
-    //考虑右值(*p)
-    if (rvar->is_ref())
-    {
-        if (!lvar->is_ref())
-        {
-            //中间代码lvar=*(rvar->ptr)
-            symtab.add_inst(new InterInst(IROP_GET, lvar, rvar->getPointer()));
-            return lvar;
-        }
-        else
-        {
-            //中间代码*(lvar->ptr)=*(rvar->ptr),先处理右值
-            rvar = gen_assign(rvar);
-        }
-    }
-    //赋值运算
-    if (lvar->is_ref())
-    {
-        //中间代码*(lvar->ptr)=rvar
-        symtab.add_inst(new InterInst(IROP_SET, rvar, lvar->getPointer()));
-    }
-    else
-    {
-        //中间代码lvar=rvar
-    }*/
     Var *rtemp = rvar;
     if(lvar->is_pointer())
     {

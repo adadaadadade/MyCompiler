@@ -1,18 +1,18 @@
-selecter.o: selecter.cpp selector.h common.h iloc.h intercode.h symbol.h \
- ast.h
-symbol.o: symbol.cpp symbol.h common.h ast.h intercode.h error.h symtab.h \
- selector.h iloc.h platform.h
 symtab.o: symtab.cpp symtab.h common.h symbol.h ast.h intercode.h error.h
 ast.o: ast.cpp ast.h common.h symtab.h
+symbol.o: symbol.cpp symbol.h common.h ast.h intercode.h error.h symtab.h \
+ selector.h iloc.h platform.h
 scanner.o: scanner.cpp scanner.h common.h error.h args.h
 platform.o: platform.cpp platform.h common.h
+args.o: args.cpp args.h common.h
 error.o: error.cpp error.h common.h scanner.h
 lexer.o: lexer.cpp lexer.h common.h scanner.h keywords.h token.h util.h
 genir.o: genir.cpp genir.h common.h ast.h intercode.h symbol.h symtab.h \
  error.h
 iloc.o: iloc.cpp iloc.h common.h symbol.h ast.h intercode.h platform.h
 intercode.o: intercode.cpp intercode.h common.h symbol.h ast.h
-args.o: args.cpp args.h common.h
+selector.o: selector.cpp selector.h common.h iloc.h intercode.h symbol.h \
+ ast.h
 parser.o: parser.cpp parser.h common.h lexer.h scanner.h keywords.h \
  token.h ast.h error.h symbol.h intercode.h symtab.h args.h
 token.o: token.cpp token.h common.h keywords.h

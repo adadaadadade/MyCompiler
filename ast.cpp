@@ -436,7 +436,8 @@ void Tp::add_tail(Tp *tp)
     while (i->tp_tail != NULL)
         i = i->tp_tail;
     i->tp_tail = tp;
-    tp->set_parent(i);
+    if(tp)
+        tp->set_parent(i);
 }
 
 string Tp::to_string()

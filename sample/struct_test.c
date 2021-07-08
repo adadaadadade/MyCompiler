@@ -1,25 +1,26 @@
-int func(int a[1][2][3])
+struct t1
 {
-    //int ***a = arg;
-    int i1 = 0;
-    int i2 = 1;
-    int i3 = 2;
-    a[i1][i2][i3] = 1;
-    return a[i1][i2][i3];
-}
+    int[5][5][5] arr;
+};
+
+typedef struct t1 st1;
+
 
 int main()
 {
-    int a[5][5][5];
-    int ;
-    sizeof(**a);
-    sizeof(a[1]);
-    //6, 3, 1
-    int i1 = 0;
-    int i2 = 1;
-    int i3 = 2;
+    st1 t;
+    int i1;
+    int i2;
+    int i3;
     int ret;
-    //24, 12, 4
-    a[i1][i2][i3] = 2;
-    ret = func(a);
+    ret = 0;
+    for(i1 = 0; i1 < 5; i1 ++)
+        for(i2 = 0; i2 < 5; i2 ++)
+            for(i3 = 0; i3 < 5; i3 ++)
+            {
+                t.arr[i1][i2][i3] = ret;
+                ret ++;
+            }
+    ret = t.arr[1][1][1];
+    return ret;
 }

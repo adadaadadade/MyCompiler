@@ -1,116 +1,180 @@
-	.arch armv8-a
-	.file	"struct_test.c"
-	.text
-	.align	2
-	.global	func
-	.type	func, %function
-func:
-.LFB0:
-	.cfi_startproc
-	sub	sp, sp, #32
-	.cfi_def_cfa_offset 32
-	str	x0, [sp, 8]
-	str	wzr, [sp, 20]	#i1
-	mov	w0, 1
-	str	w0, [sp, 24]	#i2
-	mov	w0, 2
-	str	w0, [sp, 28]	#i3
-	ldrsw	x1, [sp, 20]
-	mov	x0, x1
-	lsl	x0, x0, 1	#2i1
-	add	x0, x0, x1	#3i1
-	lsl	x0, x0, 3	#24i1
-	mov	x1, x0
-	ldr	x0, [sp, 8]	#a
-	add	x2, x0, x1	#a + 24i1
-	ldrsw	x3, [sp, 28]	#i3
-	ldrsw	x1, [sp, 24]	#i2
-	mov	x0, x1	#i2
-	lsl	x0, x0, 1	#2i2
-	add	x0, x0, x1	#3i2
-	add	x0, x0, x3	#3i2 + i3
-	mov	w1, 1
-	str	w1, [x2, x0, lsl 2]
-	ldrsw	x1, [sp, 20]
-	mov	x0, x1
-	lsl	x0, x0, 1
-	add	x0, x0, x1
-	lsl	x0, x0, 3
-	mov	x1, x0
-	ldr	x0, [sp, 8]
-	add	x2, x0, x1
-	ldrsw	x3, [sp, 28]
-	ldrsw	x1, [sp, 24]
-	mov	x0, x1
-	lsl	x0, x0, 1
-	add	x0, x0, x1
-	add	x0, x0, x3
-	ldr	w0, [x2, x0, lsl 2]
-	add	sp, sp, 32
-	.cfi_def_cfa_offset 0
-	ret
-	.cfi_endproc
-.LFE0:
-	.size	func, .-func
-	.align	2
-	.global	main
-	.type	main, %function
+.text
+#函数main代码
+	.global main
 main:
-.LFB1:
-	.cfi_startproc
-	stp	x29, x30, [sp, -64]!
-	.cfi_def_cfa_offset 64
-	.cfi_offset 29, -64
-	.cfi_offset 30, -56
-	mov	x29, sp
-	adrp	x0, :got:__stack_chk_guard
-	ldr	x0, [x0, #:got_lo12:__stack_chk_guard]
-	ldr	x1, [x0]
-	str	x1, [sp, 56]
-	mov	x1,0
-	str	wzr, [sp, 16]
-	mov	w0, 1
-	str	w0, [sp, 20]
-	mov	w0, 2
-	str	w0, [sp, 24]
-	ldrsw	x3, [sp, 24]
-	ldrsw	x1, [sp, 16]
-	ldrsw	x2, [sp, 20]
-	mov	x0, x1
-	lsl	x0, x0, 1
-	add	x0, x0, x1
-	lsl	x0, x0, 1
-	mov	x1, x2
-	lsl	x1, x1, 1
-	add	x1, x1, x2
-	add	x0, x0, x1
-	add	x0, x0, x3
-	lsl	x0, x0, 2
-	add	x1, sp, 32
-	mov	w2, 2
-	str	w2, [x1, x0]
-	add	x0, sp, 32
-	bl	func
-	str	w0, [sp, 28]
-	mov	w0, 0
-	mov	w1, w0
-	adrp	x0, :got:__stack_chk_guard
-	ldr	x0, [x0, #:got_lo12:__stack_chk_guard]
-	ldr	x2, [sp, 56]
-	ldr	x3, [x0]
-	subs	x2, x2, x3
-	mov	x3, 0
-	beq	.L5
-	bl	__stack_chk_fail
-.L5:
-	mov	w0, w1
-	ldp	x29, x30, [sp], 64
-	.cfi_restore 30
-	.cfi_restore 29
-	.cfi_def_cfa_offset 0
-	ret
-	.cfi_endproc
-.LFE1:
-	.size	main, .-main
-	.ident	"GCC: (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0"
-	.section	.note.GNU-stack,"",@progbits
+	# 函数入口
+	mov ip,sp
+	stmfd sp!,{fp,ip,lr,pc}
+	sub fp,ip,#4
+	# 开辟栈帧
+	sub sp,sp,#616
+	# 加载参数变量到寄存器
+	# 函数内代码
+.LFB0:
+	mov r8,#0
+	str r8,[fp,#-528]
+	mov r8,#0
+	str r8,[fp,#-516]
+.L0:
+	ldr r8,[fp,#-516]
+	mov r9,#5
+	cmp r8,r9
+	movlt r8,#1
+	movge r8,#0
+	str r8,[fp,#-532]
+	ldr r8,[fp,#-532]
+	cmp r8,#0
+	beq .L1
+	b .L3
+.L4:
+	ldr r8,[fp,#-516]
+	mov r9,#1
+	add r8,r8,r9
+	str r8,[fp,#-536]
+	ldr r8,[fp,#-536]
+	str r8,[fp,#-516]
+	b .L0
+.L3:
+	mov r8,#0
+	str r8,[fp,#-520]
+.L6:
+	ldr r8,[fp,#-520]
+	mov r9,#5
+	cmp r8,r9
+	movlt r8,#1
+	movge r8,#0
+	str r8,[fp,#-540]
+	ldr r8,[fp,#-540]
+	cmp r8,#0
+	beq .L7
+	b .L9
+.L10:
+	ldr r8,[fp,#-520]
+	mov r9,#1
+	add r8,r8,r9
+	str r8,[fp,#-544]
+	ldr r8,[fp,#-544]
+	str r8,[fp,#-520]
+	b .L6
+.L9:
+	mov r8,#0
+	str r8,[fp,#-524]
+.L12:
+	ldr r8,[fp,#-524]
+	mov r9,#5
+	cmp r8,r9
+	movlt r8,#1
+	movge r8,#0
+	str r8,[fp,#-548]
+	ldr r8,[fp,#-548]
+	cmp r8,#0
+	beq .L13
+	b .L15
+.L16:
+	ldr r8,[fp,#-524]
+	mov r9,#1
+	add r8,r8,r9
+	str r8,[fp,#-552]
+	ldr r8,[fp,#-552]
+	str r8,[fp,#-524]
+	b .L12
+.L15:
+	add r8,fp,#-16
+	str r8,[fp,#-560]
+	ldr r8,[fp,#-560]
+	str r8,[fp,#-556]
+	mov r8,#-100
+	ldr r9,[fp,#-516]
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-564]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-564]
+	add r8,r8,r9
+	str r8,[fp,#-568]
+	ldr r8,[fp,#-568]
+	str r8,[fp,#-556]
+	mov r8,#-20
+	ldr r9,[fp,#-520]
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-572]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-572]
+	add r8,r8,r9
+	str r8,[fp,#-576]
+	ldr r8,[fp,#-576]
+	str r8,[fp,#-556]
+	mov r8,#-4
+	ldr r9,[fp,#-524]
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-580]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-580]
+	add r8,r8,r9
+	str r8,[fp,#-584]
+	ldr r8,[fp,#-584]
+	str r8,[fp,#-556]
+	ldr r8,[fp,#-528]
+	ldr r9,[fp,#-556]
+	str r8,[r9]
+	ldr r8,[fp,#-528]
+	mov r9,#1
+	add r8,r8,r9
+	str r8,[fp,#-588]
+	ldr r8,[fp,#-588]
+	str r8,[fp,#-528]
+	b .L16
+.L13:
+	b .L10
+.L7:
+	b .L4
+.L1:
+	add r8,fp,#-16
+	str r8,[fp,#-560]
+	ldr r8,[fp,#-560]
+	str r8,[fp,#-556]
+	mov r8,#-100
+	mov r9,#1
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-564]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-564]
+	add r8,r8,r9
+	str r8,[fp,#-568]
+	ldr r8,[fp,#-568]
+	str r8,[fp,#-556]
+	mov r8,#-20
+	mov r9,#1
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-572]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-572]
+	add r8,r8,r9
+	str r8,[fp,#-576]
+	ldr r8,[fp,#-576]
+	str r8,[fp,#-556]
+	mov r8,#-4
+	mov r9,#1
+	mul r10,r8,r9
+	mov r8,r10
+	str r8,[fp,#-580]
+	ldr r8,[fp,#-556]
+	ldr r9,[fp,#-580]
+	add r8,r8,r9
+	str r8,[fp,#-584]
+	ldr r8,[fp,#-584]
+	str r8,[fp,#-556]
+	ldr r8,[fp,#-556]
+	ldr r8,[r8]
+	str r8,[fp,#-588]
+	ldr r8,[fp,#-588]
+	str r8,[fp,#-528]
+	ldr r0,[fp,#-528]
+	b .LFE0
+.LFE0:
+	# 函数出口
+	ldmea fp,{fp,sp,pc}

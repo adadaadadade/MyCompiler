@@ -68,6 +68,13 @@ Var::Var()
 Var::Var(Tp *tp, string name, bool is_temp) //tp 和 name 生成 Var
 {
     init();
+    if(tp->type == Tp::AID)
+    {
+        Typedef *td = Symtab::get_symtab()->get_typedef(tp->aid->name);
+        Tp* ntp = td->get_tp();
+        ntp->add_tail(tp->tp_tail);
+        tp = ntp;
+    }
     this->name = name;
     this->tp = tp;
     this->is_temp = is_temp;
@@ -147,7 +154,7 @@ Var::Var(Tp *tp, string name, bool is_temp) //tp 和 name 生成 Var
                 }
                 else if (array_sizes[i] == 0)
                 {
-                    Error::sem_error(Error::ARRAY_LEN_INVALID);
+                    Error::sem_error(Error::ARRAY_LEN_INVALID, name);
                 }
                 else
                 {
@@ -365,7 +372,7 @@ int Var::get_arr_offset(int index_cnt)
     }
     if (index_cnt >= array_dim || index_cnt < 0)
     {
-        Error::sem_error(Error::ARRAY_LEN_INVALID);
+        Error::sem_error(Error::ARRAY_LEN_INVALID, name);
     }
     int offset = 0;
     int cnt = 1;
@@ -503,7 +510,7 @@ int Var::get_offset_lit(vector<int> &array_index)
     }
     if (array_index.size() != array_dim)
     {
-        Error::sem_error(Error::ARRAY_LEN_INVALID);
+        Error::sem_error(Error::ARRAY_LEN_INVALID, name);
     }
     int offset = 0;
     int cnt = 0;
