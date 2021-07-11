@@ -1086,7 +1086,10 @@ Exp *Parser::realarg(Exp *e)
 {
     if (FEXP)
     {
-        Exp *a = arg();
+        Exp *a = new Exp();
+        a->type = Exp::FUNC;
+        a->exp1 = expr();
+        a->exp1->set_parent(a);
         a->is_func_arg = true;
         arglist(a);
         return a;
@@ -1103,7 +1106,10 @@ Exp *Parser::arglist(Exp *last)
 {
     if (match(COMMA))
     {
-        Exp *next = arg();
+        Exp *next = new Exp();
+        next->type = Exp::FUNC;
+        next->exp1 = arg();
+        next->exp1->set_parent(next);
         next->is_func_arg = true;
         last->exp_tail = next;
         last->exp_tail->set_parent(last);

@@ -68,7 +68,7 @@ void Selector::translate(InterInst *inst)
     {                                          //设置指针值
         iloc.ldr_var("r8", inst->get_result()); //rs -> r8
         iloc.ldr_var("r9", inst->get_arg1());   //arg1 -> r9
-        //虽然基址寄存器r9不能修改（r9又是临时寄存器），但是disp=0，因此不会使用r9作为临时寄存器
+        
         iloc.str_base("r8", "r9", 0, "r9", inst->get_arg1()->is_string()); //rs -> *arg1
         iloc.nop();                                                       //占位
     }

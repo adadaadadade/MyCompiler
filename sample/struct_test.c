@@ -1,6 +1,7 @@
 struct t1
 {
     int[5][5][5] arr;
+    int b;
 };
 
 typedef struct t1 st1;

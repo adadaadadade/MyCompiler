@@ -97,7 +97,7 @@ void ILoc::ldr_lb(string rs_reg, string name)
 void ILoc::ldr_base(string rs_reg, string base, int disp, bool is_half)
 {
     if (Arm32Plat::is_disp(disp))
-    { //有效的偏移常量
+    { 
         if (disp)
             base += "," + to_string(disp); //[fp,#-16] [fp]
     }
@@ -113,7 +113,7 @@ void ILoc::ldr_base(string rs_reg, string base, int disp, bool is_half)
 void ILoc::str_base(string src_reg, string base, int disp, string tmp_reg, bool is_half)
 {
     if (Arm32Plat::is_disp(disp))
-    { //有效的偏移常量
+    { 
         if (disp)
             base += "," + to_string(disp); //[fp,#-16] [fp]
     }
@@ -128,17 +128,7 @@ void ILoc::str_base(string src_reg, string base, int disp, string tmp_reg, bool 
 
 void ILoc::init_var(Var *var, string init_reg, string tmp_reg)
 {
-    /*
-    if (!var->unInit())
-    {                                           //
-        if (var->is_base())                      //基本类型初始化 100 'a'
-            ldr_imm(init_reg, var->getVal());   //ldr r8,#100
-        else                                    //字符指针初始化
-            ldr_lb(init_reg, var->getPtrVal()); //ldr r8,=.L1, .L1 byte "1234567"
-        //初始值已经加载完成！一般在r8
-        str_var(init_reg, var, tmp_reg); //将初始值保存到变量内存
-    }
-    */
+
 }
 
 void ILoc::ldr_var(string rs_reg, Var *var)
@@ -147,12 +137,12 @@ void ILoc::ldr_var(string rs_reg, Var *var)
         return;                    //无效变量
     bool is_half = var->is_half(); //是否是字符变量，需要类型转换
     if (!var->is_literal())
-    {                                                     //非常量
-        int id = var->reg_id;                             //-1表示非寄存器，其他表示寄存器的索引值
-        if (id != -1)                                     //寄存器变量
-            emit("mov", rs_reg, Arm32Plat::reg_name[id]); //mov r8,r2 | 这里有优化空间——消除r8
+    {                                                     
+        int id = var->reg_id;                             
+        if (id != -1)                                     
+            emit("mov", rs_reg, Arm32Plat::reg_name[id]); //mov r8,r2 
         else
-        {                                  //所有定义的变量和数组
+        {                                  
             int off = var->get_f_offset(); //栈帧偏移
             bool isGlb = !off;             //变量偏移，0表示全局，其他表示局部
             bool isVar = !var->is_array(); //纯变量，0表示数组，1表示变量
@@ -182,11 +172,9 @@ void ILoc::ldr_var(string rs_reg, Var *var)
 
 void ILoc::lea_var(string rs_reg, Var *var)
 {
-    //被加载的变量肯定不是常量！
-    //被加载的变量肯定不是寄存器变量！
     int off = var->get_f_offset();       //栈帧偏移
     bool isGlb = !off;                   //变量偏移，0表示全局，其他表示局部
-    if (isGlb)                           //全局符号
+    if (isGlb)                           
         ldr_lb(rs_reg, var->get_name()); //ldr r9,=glb 地址寄存器加载变量地址
     else
     {                           //局部符号
@@ -196,20 +184,20 @@ void ILoc::lea_var(string rs_reg, Var *var)
 
 void ILoc::str_var(string src_reg, Var *var, string tmp_reg)
 {
-    //被保存目标变量肯定不是常量！
+
     int id = var->reg_id;          //-1表示非寄存器，其他表示寄存器的索引值
-    bool is_half = var->is_half(); //是否是字符变量，需要类型转换
+    bool is_half = var->is_half(); 
     if (id != -1)
     {                                                  //寄存器变量
-        emit("mov", Arm32Plat::reg_name[id], src_reg); //mov r2,r8 | 这里有优化空间——消除r8
+        emit("mov", Arm32Plat::reg_name[id], src_reg); //mov r2,r8 
     }
     else
-    {                                  //所有定义的变量,不可能是数组！
+    {                                  
         int off = var->get_f_offset(); //栈帧偏移
         bool isGlb = !off;             //变量偏移，0表示全局，其他表示局部
         if (isGlb)
         {                                                    //全局符号
-            ldr_lb(tmp_reg, var->get_name());                //ldr r9,=glb 地址寄存器加载变量地址
+            ldr_lb(tmp_reg, var->get_name());                //ldr r9,=glb 
             str_base(src_reg, tmp_reg, 0, tmp_reg, is_half); //str r8,[r9]
         }
         else

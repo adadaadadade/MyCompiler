@@ -7,124 +7,124 @@ main:
 	stmfd sp!,{fp,ip,lr,pc}
 	sub fp,ip,#4
 	# 开辟栈帧
-	sub sp,sp,#616
+	sub sp,sp,#656
 	# 加载参数变量到寄存器
 	# 函数内代码
 .LFB0:
 	mov r8,#0
-	str r8,[fp,#-528]
+	str r8,[fp,#-532]
 	mov r8,#0
-	str r8,[fp,#-516]
+	str r8,[fp,#-520]
 .L0:
-	ldr r8,[fp,#-516]
+	ldr r8,[fp,#-520]
 	mov r9,#5
 	cmp r8,r9
 	movlt r8,#1
 	movge r8,#0
-	str r8,[fp,#-532]
-	ldr r8,[fp,#-532]
+	str r8,[fp,#-536]
+	ldr r8,[fp,#-536]
 	cmp r8,#0
 	beq .L1
 	b .L3
 .L4:
-	ldr r8,[fp,#-516]
+	ldr r8,[fp,#-520]
 	mov r9,#1
 	add r8,r8,r9
-	str r8,[fp,#-536]
-	ldr r8,[fp,#-536]
-	str r8,[fp,#-516]
+	str r8,[fp,#-540]
+	ldr r8,[fp,#-540]
+	str r8,[fp,#-520]
 	b .L0
 .L3:
 	mov r8,#0
-	str r8,[fp,#-520]
+	str r8,[fp,#-524]
 .L6:
-	ldr r8,[fp,#-520]
+	ldr r8,[fp,#-524]
 	mov r9,#5
 	cmp r8,r9
 	movlt r8,#1
 	movge r8,#0
-	str r8,[fp,#-540]
-	ldr r8,[fp,#-540]
+	str r8,[fp,#-544]
+	ldr r8,[fp,#-544]
 	cmp r8,#0
 	beq .L7
 	b .L9
 .L10:
-	ldr r8,[fp,#-520]
+	ldr r8,[fp,#-524]
 	mov r9,#1
 	add r8,r8,r9
-	str r8,[fp,#-544]
-	ldr r8,[fp,#-544]
-	str r8,[fp,#-520]
+	str r8,[fp,#-548]
+	ldr r8,[fp,#-548]
+	str r8,[fp,#-524]
 	b .L6
 .L9:
 	mov r8,#0
-	str r8,[fp,#-524]
+	str r8,[fp,#-528]
 .L12:
-	ldr r8,[fp,#-524]
+	ldr r8,[fp,#-528]
 	mov r9,#5
 	cmp r8,r9
 	movlt r8,#1
 	movge r8,#0
-	str r8,[fp,#-548]
-	ldr r8,[fp,#-548]
+	str r8,[fp,#-552]
+	ldr r8,[fp,#-552]
 	cmp r8,#0
 	beq .L13
 	b .L15
 .L16:
-	ldr r8,[fp,#-524]
+	ldr r8,[fp,#-528]
 	mov r9,#1
 	add r8,r8,r9
-	str r8,[fp,#-552]
-	ldr r8,[fp,#-552]
-	str r8,[fp,#-524]
+	str r8,[fp,#-556]
+	ldr r8,[fp,#-556]
+	str r8,[fp,#-528]
 	b .L12
 .L15:
 	add r8,fp,#-16
-	str r8,[fp,#-560]
-	ldr r8,[fp,#-560]
-	str r8,[fp,#-556]
-	mov r8,#-100
-	ldr r9,[fp,#-516]
-	mul r10,r8,r9
-	mov r8,r10
 	str r8,[fp,#-564]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-564]
-	add r8,r8,r9
-	str r8,[fp,#-568]
-	ldr r8,[fp,#-568]
-	str r8,[fp,#-556]
-	mov r8,#-20
+	ldr r8,[fp,#-564]
+	str r8,[fp,#-560]
+	mov r8,#-100
 	ldr r9,[fp,#-520]
 	mul r10,r8,r9
 	mov r8,r10
-	str r8,[fp,#-572]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-572]
+	str r8,[fp,#-568]
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-568]
 	add r8,r8,r9
-	str r8,[fp,#-576]
-	ldr r8,[fp,#-576]
-	str r8,[fp,#-556]
-	mov r8,#-4
+	str r8,[fp,#-572]
+	ldr r8,[fp,#-572]
+	str r8,[fp,#-560]
+	mov r8,#-20
 	ldr r9,[fp,#-524]
 	mul r10,r8,r9
 	mov r8,r10
-	str r8,[fp,#-580]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-580]
+	str r8,[fp,#-576]
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-576]
 	add r8,r8,r9
+	str r8,[fp,#-580]
+	ldr r8,[fp,#-580]
+	str r8,[fp,#-560]
+	mov r8,#-4
+	ldr r9,[fp,#-528]
+	mul r10,r8,r9
+	mov r8,r10
 	str r8,[fp,#-584]
-	ldr r8,[fp,#-584]
-	str r8,[fp,#-556]
-	ldr r8,[fp,#-528]
-	ldr r9,[fp,#-556]
-	str r8,[r9]
-	ldr r8,[fp,#-528]
-	mov r9,#1
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-584]
 	add r8,r8,r9
 	str r8,[fp,#-588]
 	ldr r8,[fp,#-588]
-	str r8,[fp,#-528]
+	str r8,[fp,#-560]
+	ldr r8,[fp,#-532]
+	ldr r9,[fp,#-560]
+	str r8,[r9]
+	ldr r8,[fp,#-532]
+	mov r9,#1
+	add r8,r8,r9
+	str r8,[fp,#-592]
+	ldr r8,[fp,#-592]
+	str r8,[fp,#-532]
 	b .L16
 .L13:
 	b .L10
@@ -132,48 +132,48 @@ main:
 	b .L4
 .L1:
 	add r8,fp,#-16
+	str r8,[fp,#-564]
+	ldr r8,[fp,#-564]
 	str r8,[fp,#-560]
-	ldr r8,[fp,#-560]
-	str r8,[fp,#-556]
 	mov r8,#-100
 	mov r9,#1
 	mul r10,r8,r9
 	mov r8,r10
-	str r8,[fp,#-564]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-564]
-	add r8,r8,r9
 	str r8,[fp,#-568]
-	ldr r8,[fp,#-568]
-	str r8,[fp,#-556]
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-568]
+	add r8,r8,r9
+	str r8,[fp,#-572]
+	ldr r8,[fp,#-572]
+	str r8,[fp,#-560]
 	mov r8,#-20
 	mov r9,#1
 	mul r10,r8,r9
 	mov r8,r10
-	str r8,[fp,#-572]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-572]
-	add r8,r8,r9
 	str r8,[fp,#-576]
-	ldr r8,[fp,#-576]
-	str r8,[fp,#-556]
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-576]
+	add r8,r8,r9
+	str r8,[fp,#-580]
+	ldr r8,[fp,#-580]
+	str r8,[fp,#-560]
 	mov r8,#-4
 	mov r9,#1
 	mul r10,r8,r9
 	mov r8,r10
-	str r8,[fp,#-580]
-	ldr r8,[fp,#-556]
-	ldr r9,[fp,#-580]
-	add r8,r8,r9
 	str r8,[fp,#-584]
-	ldr r8,[fp,#-584]
-	str r8,[fp,#-556]
-	ldr r8,[fp,#-556]
-	ldr r8,[r8]
+	ldr r8,[fp,#-560]
+	ldr r9,[fp,#-584]
+	add r8,r8,r9
 	str r8,[fp,#-588]
 	ldr r8,[fp,#-588]
-	str r8,[fp,#-528]
-	ldr r0,[fp,#-528]
+	str r8,[fp,#-560]
+	ldr r8,[fp,#-560]
+	ldr r8,[r8]
+	str r8,[fp,#-592]
+	ldr r8,[fp,#-592]
+	str r8,[fp,#-532]
+	ldr r0,[fp,#-532]
 	b .LFE0
 .LFE0:
 	# 函数出口

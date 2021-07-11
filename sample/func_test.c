@@ -20,7 +20,8 @@ int main()
    int[5] arr;
    int x;
    arr[1] = 1;
-   x = sum(fib(arr[1]), 2, 3, 4, 5);
+   x = sum(fib(5), 2, 3, 4, 5);
+   return x;
    x = fib(sum(1, 1, 1, 1, 1));
    return x;
 }

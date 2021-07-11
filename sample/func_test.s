@@ -117,12 +117,6 @@ main:
 	str r8,[r9]
 	mov r8,#5
 	stmfd sp!,{r8}
-	mov r8,#4
-	stmfd sp!,{r8}
-	mov r8,#3
-	stmfd sp!,{r8}
-	mov r8,#2
-	stmfd sp!,{r8}
 	bl fib
 	add sp,sp,#4
 	str r8,[fp,#-56]
@@ -141,6 +135,8 @@ main:
 	str r8,[fp,#-60]
 	ldr r8,[fp,#-60]
 	str r8,[fp,#-36]
+	ldr r0,[fp,#-36]
+	b .LFE2
 	mov r8,#1
 	stmfd sp!,{r8}
 	mov r8,#1
@@ -154,16 +150,6 @@ main:
 	bl sum
 	add sp,sp,#20
 	str r8,[fp,#-64]
-	mov r8,#1
-	stmfd sp!,{r8}
-	mov r8,#1
-	stmfd sp!,{r8}
-	mov r8,#1
-	stmfd sp!,{r8}
-	mov r8,#1
-	stmfd sp!,{r8}
-	mov r8,#1
-	stmfd sp!,{r8}
 	ldr r8,[fp,#-64]
 	stmfd sp!,{r8}
 	bl fib

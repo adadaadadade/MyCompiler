@@ -459,7 +459,7 @@ Var *GenIR::gen_func_expr(Exp *exp)
         while (e->exp_tail)
         {
             e = e->exp_tail;
-            args.push_back(gen_expr(e));
+            args.push_back(gen_expr(e->exp1));
         }
 
         // 类型检查
@@ -472,7 +472,7 @@ Var *GenIR::gen_func_expr(Exp *exp)
         Var *ret = new Var(function->get_ret()->get_basetype(), true);
         //中间代码call
         symtab.add_inst(new InterInst(IROP_CALL, function, ret));
-        symtab.add_var(ret); //将返回值声明延迟到函数调用之后！！！
+        symtab.add_var(ret); 
         return ret;
     }
     else

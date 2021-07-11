@@ -1,9 +1,10 @@
 int main()
 {
     int a;
-    if(1)
+    if (1)
     {
         a = 1;
+        assert(-1, 1);
     }
     else
     {
@@ -13,16 +14,20 @@ int main()
 
     while (a < 5)
     {
-        a ++;
-        if(a == 3)
+        a++;
+        if (a == 3)
             break;
+        while (a)
+        {
+            if (a != 5)
+                break;
+        }
     }
-
-    for(a = 0; a < 5; a ++)
+    return a;
+    for (a = 0; a < 5; a++)
     {
         continue;
         a = 245;
     }
     return a;
-    
 }
